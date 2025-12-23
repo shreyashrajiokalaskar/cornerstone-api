@@ -1,12 +1,13 @@
+import { ExceptionErrorFilter, ReponseInterceptor } from '@app/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { ExceptionErrorFilter, ReponseInterceptor } from '@app/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
+  app.enableCors();
 
   // Enable the global ValidationPipe
   app.useGlobalPipes(
@@ -19,6 +20,7 @@ async function bootstrap() {
   const port = process.env.PORT || 3333;
   app.useGlobalInterceptors(new ReponseInterceptor());
   app.useGlobalFilters(new ExceptionErrorFilter());
+  app.useLogger(['debug', 'error', 'fatal', 'log', 'verbose', 'warn']);
   await app.listen(port);
   console.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,

@@ -6,3 +6,4 @@ export * from './enum/common.enum';
 export * from './filters/error-exception.filter';
 export * from './guards/auth.guard';
 export * from './interceptors/response.interceptor';
+export * from './interfaces/common.interface';

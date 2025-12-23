@@ -1,5 +1,10 @@
 import { AuthProvider, ROLES } from '@app/common';
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserAuthEntity } from 'src/auth/entities/user-auth.entity';
 import { RoleEntity } from 'src/roles/entities/role.entity';
@@ -9,27 +14,34 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRolesEntity } from './entities/user-role.entity';
 import { UserEntity } from './entities/user.entity';
 
-
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
-    @InjectRepository(UserAuthEntity) private authProviderRepo: Repository<UserAuthEntity>,
-    private dataSource: DataSource) { }
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(
+    @InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
+    @InjectRepository(UserAuthEntity)
+    private authProviderRepo: Repository<UserAuthEntity>,
+    private dataSource: DataSource,
+  ) {}
 
   async createInternalUser(createUserDto: CreateUserDto) {
     await this.dataSource.transaction(async (manager: EntityManager) => {
+      this.logger.debug('STARTING TRANSACTION FROM HERE');
       const isEmailPresent = await manager.findOne(UserEntity, {
         where: {
-          email: createUserDto.email
-        }
+          email: createUserDto.email,
+        },
       });
 
       if (isEmailPresent) {
+        this.logger.error('EMAILS ALREADY EXISTS!');
         throw new ConflictException('Email already registered');
       }
-      const user = manager.create(UserEntity,
-        { email: createUserDto.email, name: createUserDto.name },
-      );
+      const user = manager.create(UserEntity, {
+        email: createUserDto.email,
+        name: createUserDto.name,
+      });
       await manager.save(UserEntity, user);
       const role = await manager.findOneOrFail(RoleEntity, {
         where: { role: ROLES.USER },
@@ -39,21 +51,20 @@ export class UsersService {
         provider: AuthProvider.INTERNAL,
         providerUserId: user.id,
         passwordHash: createUserDto.password,
-        user
-      })
+        user,
+      });
 
-      await manager.save(userAuth)
+      await manager.save(userAuth);
 
       const userRole = manager.create(UserRolesEntity, {
         role,
-        user
-      })
+        user,
+      });
 
       await manager.save(userRole);
 
       return user;
-    })
-
+    });
   }
 
   async findAll() {
@@ -107,21 +118,21 @@ export class UsersService {
   async findByMail(mail: string) {
     const user = await this.userRepo.findOne({
       where: {
-        email: mail
-      }
+        email: mail,
+      },
     });
 
     if (!user) {
-      throw new NotFoundException('User not found!')
+      throw new NotFoundException('User not found!');
     }
 
     const authProvider = await this.authProviderRepo.findOne({
       where: {
         user: { id: user.id },
-        provider: AuthProvider.INTERNAL
-      }
+        provider: AuthProvider.INTERNAL,
+      },
     });
 
-    return { ...user, password: (authProvider?.passwordHash ?? '') };
+    return { ...user, password: authProvider?.passwordHash ?? '' };
   }
 }
