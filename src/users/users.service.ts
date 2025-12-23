@@ -1,28 +1,59 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { AuthProvider, ROLES } from '@app/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserAuthEntity } from 'src/auth/entities/user-auth.entity';
+import { RoleEntity } from 'src/roles/entities/role.entity';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import { UserRolesEntity } from './entities/user-role.entity';
+import { UserEntity } from './entities/user.entity';
+
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
-  async create(createUserDto: CreateUserDto) {
-    const { password } = createUserDto;
-    const hashedPassword = await bcrypt.hash(password, 11);
-    const user = this.userRepo.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-    const savedUser = await this.userRepo.save(user);
-    return {
-      id: savedUser.id,
-      email: savedUser.email,
-      name: savedUser.name,
-      createdAt: savedUser.createdAt,
-    };
+  constructor(@InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
+    @InjectRepository(UserAuthEntity) private authProviderRepo: Repository<UserAuthEntity>,
+    private dataSource: DataSource) { }
+
+  async createInternalUser(createUserDto: CreateUserDto) {
+    await this.dataSource.transaction(async (manager: EntityManager) => {
+      const isEmailPresent = await manager.findOne(UserEntity, {
+        where: {
+          email: createUserDto.email
+        }
+      });
+
+      if (isEmailPresent) {
+        throw new ConflictException('Email already registered');
+      }
+      const user = manager.create(UserEntity,
+        { email: createUserDto.email, name: createUserDto.name },
+      );
+      await manager.save(UserEntity, user);
+      const role = await manager.findOneOrFail(RoleEntity, {
+        where: { role: ROLES.USER },
+      });
+
+      const userAuth = manager.create(UserAuthEntity, {
+        provider: AuthProvider.INTERNAL,
+        providerUserId: user.id,
+        passwordHash: createUserDto.password,
+        user
+      })
+
+      await manager.save(userAuth)
+
+      const userRole = manager.create(UserRolesEntity, {
+        role,
+        user
+      })
+
+      await manager.save(userRole);
+
+      return user;
+    })
+
   }
 
   async findAll() {
@@ -71,5 +102,26 @@ export class UsersService {
       throw new NotFoundException('User not found!');
     }
     return `This action removes a #${id} user`;
+  }
+
+  async findByMail(mail: string) {
+    const user = await this.userRepo.findOne({
+      where: {
+        email: mail
+      }
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found!')
+    }
+
+    const authProvider = await this.authProviderRepo.findOne({
+      where: {
+        user: { id: user.id },
+        provider: AuthProvider.INTERNAL
+      }
+    });
+
+    return { ...user, password: (authProvider?.passwordHash ?? '') };
   }
 }
