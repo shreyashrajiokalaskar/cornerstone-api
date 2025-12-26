@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { typeOrmConfig } from './config/typeorm.config';
+import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -18,8 +19,9 @@ import { UsersModule } from './users/users.module';
     }),
     UsersModule,
     AuthModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

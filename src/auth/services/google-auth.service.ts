@@ -41,6 +41,8 @@ export class GoogleAuthService {
   async verifyGoogleCode(code: string): Promise<{
     email: string;
     googleId: string;
+    name: string;
+    image?: string;
   }> {
     const client = this.getAuthClient();
 
@@ -62,6 +64,8 @@ export class GoogleAuthService {
     return {
       email: payload.email,
       googleId: payload.sub,
+      name: payload.name ?? '',
+      image: payload.picture,
     };
   }
 }

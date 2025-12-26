@@ -9,10 +9,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserAuthEntity } from 'src/auth/entities/user-auth.entity';
 import { RoleEntity } from 'src/roles/entities/role.entity';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateInternalUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRolesEntity } from './entities/user-role.entity';
 import { UserEntity } from './entities/user.entity';
+
+interface IUserDetails {
+  email: string;
+  id: string;
+  photo: string;
+}
 
 @Injectable()
 export class UsersService {
@@ -25,19 +31,37 @@ export class UsersService {
     private dataSource: DataSource,
   ) {}
 
-  async createInternalUser(createUserDto: CreateUserDto) {
+  async createInternalUser(createUserDto: CreateInternalUserDto) {
     await this.dataSource.transaction(async (manager: EntityManager) => {
       this.logger.debug('STARTING TRANSACTION FROM HERE');
-      const isEmailPresent = await manager.findOne(UserEntity, {
+      const userDetails = await manager.findOne(UserEntity, {
         where: {
           email: createUserDto.email,
         },
       });
 
-      if (isEmailPresent) {
-        this.logger.error('EMAILS ALREADY EXISTS!');
-        throw new ConflictException('Email already registered');
+      if (userDetails) {
+        const alreadyInternalUser = await manager.findOne(UserAuthEntity, {
+          where: {
+            providerUserId: userDetails?.id,
+            provider: AuthProvider.INTERNAL,
+          },
+        });
+
+        if (alreadyInternalUser) {
+          this.logger.error('EMAILS ALREADY EXISTS!');
+          throw new ConflictException('Email already registered');
+        }
+        const userAuth = manager.create(UserAuthEntity, {
+          provider: AuthProvider.INTERNAL,
+          providerUserId: userDetails.id,
+          user: userDetails,
+          passwordHash: createUserDto.password,
+        });
+        await manager.save(userAuth);
+        return userDetails;
       }
+
       const user = manager.create(UserEntity, {
         email: createUserDto.email,
         name: createUserDto.name,
@@ -51,6 +75,51 @@ export class UsersService {
         provider: AuthProvider.INTERNAL,
         providerUserId: user.id,
         passwordHash: createUserDto.password,
+        user,
+      });
+
+      await manager.save(userAuth);
+
+      const userRole = manager.create(UserRolesEntity, {
+        role,
+        user,
+      });
+
+      await manager.save(userRole);
+
+      return user;
+    });
+  }
+
+  async createSocialAuthUser(
+    createUserDto: Partial<CreateInternalUserDto>,
+    userId: string,
+  ) {
+    await this.dataSource.transaction(async (manager: EntityManager) => {
+      this.logger.debug('Starting transaction for Adding external User');
+      const isEmailPresent = await manager.findOne(UserAuthEntity, {
+        where: {
+          providerUserId: userId,
+          provider: AuthProvider.EXTERNAL,
+        },
+      });
+
+      if (isEmailPresent) {
+        this.logger.verbose('Social User already exists in system!');
+        return;
+      }
+      const user = manager.create(UserEntity, {
+        email: createUserDto.email,
+        name: createUserDto.name,
+      });
+      await manager.save(UserEntity, user);
+      const role = await manager.findOneOrFail(RoleEntity, {
+        where: { role: ROLES.USER },
+      });
+
+      const userAuth = manager.create(UserAuthEntity, {
+        provider: AuthProvider.EXTERNAL,
+        providerUserId: userId,
         user,
       });
 
@@ -115,7 +184,7 @@ export class UsersService {
     return `This action removes a #${id} user`;
   }
 
-  async findByMail(mail: string) {
+  async findByMail(mail: string, isInternal: boolean) {
     const user = await this.userRepo.findOne({
       where: {
         email: mail,
@@ -128,10 +197,14 @@ export class UsersService {
 
     const authProvider = await this.authProviderRepo.findOne({
       where: {
-        user: { id: user.id },
-        provider: AuthProvider.INTERNAL,
+        providerUserId: user.id,
+        provider: isInternal ? AuthProvider.INTERNAL : AuthProvider.EXTERNAL,
       },
     });
+    this.logger.verbose(
+      `Fetched authProvider for ${isInternal ? AuthProvider.INTERNAL : AuthProvider.EXTERNAL} user ->`,
+      authProvider,
+    );
 
     return { ...user, password: authProvider?.passwordHash ?? '' };
   }
