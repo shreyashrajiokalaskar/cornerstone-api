@@ -9,3 +9,15 @@ export interface IGoogleAuthCredentials {
     javascript_origins: string[];
   };
 }
+
+export interface ICurrentUser {
+  id: string;
+  email: string;
+  iat: number;
+  exp: number;
+}
+
+export interface IPresignedUrl {
+  url: string;
+  key: string;
+}

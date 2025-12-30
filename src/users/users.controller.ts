@@ -1,23 +1,27 @@
-import { AuthGuard } from '@app/common';
+import { AuthGuard, CurrentUser } from '@app/common';
 import {
   Body,
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  private logger = new Logger(UsersController.name);
+
+  constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(AuthGuard)
   @Get()
-  findAll() {
+  findAll(@CurrentUser() user) {
+    this.logger.verbose('USER DETAILS FROM JWT', user);
     return this.usersService.findAll();
   }
 

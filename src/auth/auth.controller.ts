@@ -1,5 +1,13 @@
-import { Public } from '@app/common';
-import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import { AuthGuard, Public } from '@app/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateInternalUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -50,7 +58,8 @@ export class AuthController {
     return this.authService.refreshToken(refreshToken);
   }
 
-  @Public()
+  // @Public()
+  @UseGuards(AuthGuard)
   @Post('logout')
   async logout(@Body('refreshToken') refreshToken: string) {
     await this.authService.logout(refreshToken);

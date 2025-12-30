@@ -34,7 +34,6 @@ export class AuthService {
     const isPasswordCorrect = checkPassword(loginDto.password, user.password);
     if (!isPasswordCorrect) {
       throw new BadRequestException('Wrong Password!');
-      return;
     }
     const payload = { id: user.id, email: user.email };
     const refreshToken = generateRefreshToken();
@@ -46,6 +45,7 @@ export class AuthService {
       }),
       refreshToken,
       name: user.name,
+      role: user.role,
     };
   }
 
@@ -118,7 +118,7 @@ export class AuthService {
     );
     const user: { id: string; email: string } | null =
       await this.redisService.get(`refresh:${refreshToken}`);
-
+    this.logger.verbose('Fetched user details from Redis ->', user);
     if (!user) {
       throw new UnauthorizedException();
     }

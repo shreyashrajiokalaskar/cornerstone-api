@@ -1,5 +1,6 @@
 export * from './common.module';
 export * from './common.service';
+export * from './decorators/current-user.decorator';
 export * from './decorators/public.decorator';
 export * from './entities/common.entity';
 export * from './enum/common.enum';
@@ -7,3 +8,5 @@ export * from './filters/error-exception.filter';
 export * from './guards/auth.guard';
 export * from './interceptors/response.interceptor';
 export * from './interfaces/common.interface';
+export * from './services/aws.service';
+export * from './utils/common.utils';

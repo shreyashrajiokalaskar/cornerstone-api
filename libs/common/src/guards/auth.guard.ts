@@ -4,6 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
@@ -14,6 +15,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
+    private configService: ConfigService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,9 +33,9 @@ export class AuthGuard implements CanActivate {
     }
     try {
       const user = await this.jwtService.verifyAsync(token, {
-        secret: process.env['JWT_SECRET'],
+        secret: this.configService.get('JWT_SECRET'),
       });
-      request['user'] = user;
+      request['user'] = { ...user };
       return true;
     } catch (error) {
       throw new UnauthorizedException('Token has expired!');

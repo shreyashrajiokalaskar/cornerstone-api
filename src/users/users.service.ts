@@ -14,12 +14,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRolesEntity } from './entities/user-role.entity';
 import { UserEntity } from './entities/user.entity';
 
-interface IUserDetails {
-  email: string;
-  id: string;
-  photo: string;
-}
-
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -28,6 +22,10 @@ export class UsersService {
     @InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
     @InjectRepository(UserAuthEntity)
     private authProviderRepo: Repository<UserAuthEntity>,
+    @InjectRepository(UserRolesEntity)
+    private userRolesRepo: Repository<UserRolesEntity>,
+    @InjectRepository(RoleEntity)
+    private roleRepo: Repository<RoleEntity>,
     private dataSource: DataSource,
   ) {}
 
@@ -201,11 +199,37 @@ export class UsersService {
         provider: isInternal ? AuthProvider.INTERNAL : AuthProvider.EXTERNAL,
       },
     });
+
+    this.logger.verbose(`authProvider-> ${authProvider}`);
+
+    const userRole = await this.userRolesRepo.findOne({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+      relations: {
+        role: true,
+      },
+    });
+    this.logger.verbose(`userRole-> ${userRole}`);
+
+    const role = await this.roleRepo.findOne({
+      where: {
+        id: userRole?.role.id,
+      },
+    });
+    this.logger.verbose(`role-> ${role}`);
+
     this.logger.verbose(
       `Fetched authProvider for ${isInternal ? AuthProvider.INTERNAL : AuthProvider.EXTERNAL} user ->`,
       authProvider,
     );
 
-    return { ...user, password: authProvider?.passwordHash ?? '' };
+    return {
+      ...user,
+      password: authProvider?.passwordHash ?? '',
+      role: userRole?.role.role,
+    };
   }
 }
