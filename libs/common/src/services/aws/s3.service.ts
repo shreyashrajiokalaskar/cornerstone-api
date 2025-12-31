@@ -10,7 +10,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AllowedMimeTypes, IPresignedUrl } from '..';
+import { AllowedMimeTypes, IPresignedUrl } from '../..';
 
 @Injectable()
 export class S3Service {
@@ -19,10 +19,10 @@ export class S3Service {
 
   constructor(private configService: ConfigService) {
     this.client = new S3Client({
-      region: this.configService.get('S3_REGION') as string,
+      region: this.configService.get('AWS_REGION') as string,
       credentials: {
-        accessKeyId: this.configService.get('S3_ACCESS_KEY') as string,
-        secretAccessKey: this.configService.get('S3_SECRET_KEY') as string,
+        accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID') as string,
+        secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY') as string,
       },
     });
 

@@ -1,4 +1,3 @@
-import { S3Service } from '@app/common';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -27,7 +26,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     WorkspacesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, S3Service],
-  exports: [S3Service],
+  providers: [AppService,],
+  exports: [],
 })
-export class AppModule {}
+export class AppModule { }

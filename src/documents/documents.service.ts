@@ -1,11 +1,13 @@
 import { IPresignedUrl, S3Service, safeFilename } from '@app/common';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import type { QueueService } from '@app/common/services/aws/queue/sqs.interface';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { GetPresignedUrlDto } from './dto/get-presigned-url.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { DocumentEntity } from './entities/document.entity';
+
 
 @Injectable()
 export class DocumentsService {
@@ -14,6 +16,7 @@ export class DocumentsService {
     private s3Service: S3Service,
     @InjectRepository(DocumentEntity)
     private docRepo: Repository<DocumentEntity>,
+    @Inject('QUEUE_SERVICE') private readonly sqsService: QueueService,
   ) { }
 
   async createUploadLink(
@@ -43,10 +46,15 @@ export class DocumentsService {
     this.logger.log(`DTO Checksum: ${createDocumentDto.checksum}`);
 
     if (checkSum !== createDocumentDto.checksum) {
-      throw new BadRequestException('Oops! File is curropted.');
+      throw new BadRequestException('Oops! File is corrupted.');
     }
     const newDoc = this.docRepo.create(createDocumentDto);
-    return await this.docRepo.save(newDoc);
+    const doc = await this.docRepo.save(newDoc);
+    this.logger.log(`Document saved with id: ${newDoc.id}, key: ${newDoc.key}`);
+    await this.sqsService.sendDocumentJob({ documentId: newDoc.id, workspaceId: newDoc.workspaceId, key: newDoc.key });
+
+    this.logger.log(`Document job sent to SQS for document id: ${newDoc.id}`);
+    return doc;
   }
 
   findAll() {
@@ -77,8 +85,7 @@ export class DocumentsService {
   async remove(id: string) {
     const doc = await this.findOne(id);
     this.logger.log(`Removing document id: ${id}, key: ${doc.key} from S3 and database`);
-    const deletedDoc = await this.s3Service.deleteObject(doc.key);
-    console.log(deletedDoc)
+    await this.s3Service.deleteObject(doc.key);
     return await this.docRepo.delete(id);
   }
 }

@@ -21,3 +21,9 @@ export interface IPresignedUrl {
   url: string;
   key: string;
 }
+
+export interface IDocumentJob {
+  documentId: string;
+  key: string;
+  workspaceId: string;
+}

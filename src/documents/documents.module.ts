@@ -1,6 +1,6 @@
-import { AuthGuard, S3Service } from '@app/common';
+import { S3Service } from '@app/common';
+import { QueueModule } from '@app/common/services/aws/queue/queue.module';
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
@@ -12,11 +12,7 @@ import { DocumentEntity } from './entities/document.entity';
   providers: [
     DocumentsService,
     S3Service,
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
   ],
-  imports: [TypeOrmModule.forFeature([DocumentEntity, DocumentChunkEntity])],
+  imports: [TypeOrmModule.forFeature([DocumentEntity, DocumentChunkEntity]), QueueModule],
 })
-export class DocumentsModule {}
+export class DocumentsModule { }

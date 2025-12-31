@@ -9,5 +9,7 @@ export * from './filters/error-exception.filter';
 export * from './guards/auth.guard';
 export * from './interceptors/response.interceptor';
 export * from './interfaces/common.interface';
-export * from './services/aws.service';
+export * from './services/aws/queue/sqs.service';
+export * from './services/aws/s3.service';
 export * from './utils/common.utils';
+
