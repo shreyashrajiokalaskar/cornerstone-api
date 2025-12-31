@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -14,7 +15,9 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 
 @Controller('documents')
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  private logger = new Logger(DocumentsController.name)
+
+  constructor(private readonly documentsService: DocumentsService) { }
 
   @Post('upload')
   getPresignedUrl(@Body() getPresignedUrlDto: GetPresignedUrlDto) {
@@ -33,7 +36,14 @@ export class DocumentsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.documentsService.findOne(+id);
+    this.logger.log(`Fetching document with id: ${id}`);
+    return this.documentsService.findOne(id);
+  }
+
+  @Get('view/:id')
+  viewDocument(@Param('id') id: string) {
+    this.logger.log(`Viewing document with id: ${id}`);
+    return this.documentsService.viewDocument(id);
   }
 
   @Patch(':id')
@@ -46,6 +56,7 @@ export class DocumentsController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.documentsService.remove(+id);
+    this.logger.log(`Deleting document with id: ${id}`);
+    return this.documentsService.remove(id);
   }
 }

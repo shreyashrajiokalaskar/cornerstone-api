@@ -1,4 +1,4 @@
-import { ExceptionErrorFilter, ReponseInterceptor } from '@app/common';
+import { DbExceptionFilter, ExceptionErrorFilter, ReponseInterceptor } from '@app/common';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -20,6 +20,7 @@ async function bootstrap() {
   const port = process.env.PORT || 3333;
   app.useGlobalInterceptors(new ReponseInterceptor());
   app.useGlobalFilters(new ExceptionErrorFilter());
+  app.useGlobalFilters(new DbExceptionFilter());
   app.useLogger(['debug', 'error', 'fatal', 'log', 'verbose', 'warn']);
   await app.listen(port);
   console.log(

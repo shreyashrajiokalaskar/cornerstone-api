@@ -14,7 +14,7 @@ export class DocumentsService {
     private s3Service: S3Service,
     @InjectRepository(DocumentEntity)
     private docRepo: Repository<DocumentEntity>,
-  ) {}
+  ) { }
 
   async createUploadLink(
     getPresignedUrlDto: GetPresignedUrlDto,
@@ -53,15 +53,32 @@ export class DocumentsService {
     return `This action returns all documents`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} document`;
+  async findOne(id: string) {
+    const doc = await this.docRepo.findOne({
+      where: { id },
+    })
+
+    if (!doc) {
+      throw new BadRequestException('Document not found');
+    }
+    return doc;
+  }
+
+  async viewDocument(id: string) {
+    const doc = await this.findOne(id);
+    this.logger.log(`Generating view link for document id: ${id}, key: ${doc.key}`);
+    return this.s3Service.getObject(doc.key);
   }
 
   update(id: number, updateDocumentDto: UpdateDocumentDto) {
     return `This action updates a #${id} document`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} document`;
+  async remove(id: string) {
+    const doc = await this.findOne(id);
+    this.logger.log(`Removing document id: ${id}, key: ${doc.key} from S3 and database`);
+    const deletedDoc = await this.s3Service.deleteObject(doc.key);
+    console.log(deletedDoc)
+    return await this.docRepo.delete(id);
   }
 }

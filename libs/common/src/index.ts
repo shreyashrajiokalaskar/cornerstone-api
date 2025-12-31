@@ -4,6 +4,7 @@ export * from './decorators/current-user.decorator';
 export * from './decorators/public.decorator';
 export * from './entities/common.entity';
 export * from './enum/common.enum';
+export * from './filters/db-exception.filter';
 export * from './filters/error-exception.filter';
 export * from './guards/auth.guard';
 export * from './interceptors/response.interceptor';

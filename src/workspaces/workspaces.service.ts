@@ -17,7 +17,7 @@ export class WorkspacesService {
   constructor(
     @InjectRepository(WorkspaceEntity)
     private workspaceRepo: Repository<WorkspaceEntity>,
-  ) {}
+  ) { }
 
   async create(createWorkspaceDto: CreateWorkspaceDto, ownerId: string) {
     const workspace = this.workspaceRepo.create({
@@ -30,8 +30,8 @@ export class WorkspacesService {
   }
 
   findAll() {
-    const queryBuilder = this.workspaceRepo.createQueryBuilder('qb');
-    queryBuilder.orderBy('active', 'DESC');
+    const queryBuilder = this.workspaceRepo.createQueryBuilder('workspace');
+    queryBuilder.orderBy('workspace.active', 'DESC').addOrderBy('workspace.updatedAt', 'DESC');
     return queryBuilder.getMany();
   }
 
@@ -40,12 +40,31 @@ export class WorkspacesService {
       where: {
         id,
       },
+      relations: ['documents'],
     });
     if (!workspace) {
       this.logger.log('Workspace NOT FOUND!');
       throw new NotFoundException('Workspace not Found!');
     }
-    return workspace;
+    return this.updateFindResponse(workspace);
+  }
+
+  updateFindResponse(workspace: WorkspaceEntity) {
+    return {
+      id: workspace.id,
+      name: workspace.name,
+      description: workspace.description,
+      ownerId: workspace.ownerId,
+      active: workspace.active,
+      documents: workspace.documents.map((document) => {
+        return {
+          id: document.id,
+          name: document.name,
+          key: document.key,
+          status: document.status,
+        };
+      }),
+    };
   }
 
   async update(id: string, updateWorkspaceDto: UpdateWorkspaceDto) {
@@ -58,9 +77,16 @@ export class WorkspacesService {
       this.logger.log('Workspace NOT FOUND!');
       throw new NotFoundException('Workspace not Found!');
     }
-    Object.assign(workspace, updateWorkspaceDto);
-    const updatedWorkspace = await this.workspaceRepo.save(workspace);
-    return updatedWorkspace;
+    try {
+      Object.assign(workspace, updateWorkspaceDto);
+      const updatedWorkspace = await this.workspaceRepo.save(workspace);
+      return updatedWorkspace;
+
+    } catch (error) {
+      console.error("THIS IS MY ERROR", error);
+      this.logger.log('COULD NOT UPDATE WORKSPACE', error);
+      throw error;
+    }
   }
 
   async remove(id: string, ownerId: string) {

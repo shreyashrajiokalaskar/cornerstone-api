@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  DeleteObjectCommandOutput,
   GetObjectAttributesCommand,
   GetObjectCommand,
   ObjectAttributes,
@@ -58,6 +59,15 @@ export class S3Service {
       key,
     };
   }
+
+  async deleteObject(key: string): Promise<DeleteObjectCommandOutput> {
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: key
+    })
+    return await this.client.send(command);
+  }
+
 
   private async getPresignedUrl(
     command: GetObjectCommand | PutObjectCommand | DeleteObjectCommand,
