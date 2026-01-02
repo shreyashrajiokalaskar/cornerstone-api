@@ -11,8 +11,8 @@ export class SqsService implements QueueService {
         this.client = new SQSClient({
             region: process.env['AWS_REGION'] as string,
             credentials: {
-                accessKeyId: process.env['SQS_ACCESS_KEY_ID'] as string,
-                secretAccessKey: process.env['SQS_SECRET_ACCESS_KEY'] as string,
+                accessKeyId: process.env['AWS_ACCESS_KEY_ID'] as string,
+                secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY'] as string,
             },
         });
 

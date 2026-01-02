@@ -14,8 +14,6 @@ export class UserEntity extends BaseEntity {
   @OneToMany(() => UserAuthEntity, (auth) => auth.user)
   authProviders: UserAuthEntity[];
 
-  @OneToMany(() => WorkspaceEntity, (workspace) => workspace.owner, {
-    cascade: true,
-  })
+  @OneToMany(() => WorkspaceEntity, (workspace) => workspace.owner)
   workspaces: WorkspaceEntity[];
 }

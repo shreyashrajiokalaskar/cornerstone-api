@@ -2,7 +2,7 @@ import { IPresignedUrl, S3Service, safeFilename } from '@app/common';
 import type { QueueService } from '@app/common/services/aws/queue/sqs.interface';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { GetPresignedUrlDto } from './dto/get-presigned-url.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
@@ -17,6 +17,7 @@ export class DocumentsService {
     @InjectRepository(DocumentEntity)
     private docRepo: Repository<DocumentEntity>,
     @Inject('QUEUE_SERVICE') private readonly sqsService: QueueService,
+    private dataSource: DataSource,
   ) { }
 
   async createUploadLink(
@@ -83,9 +84,16 @@ export class DocumentsService {
   }
 
   async remove(id: string) {
-    const doc = await this.findOne(id);
-    this.logger.log(`Removing document id: ${id}, key: ${doc.key} from S3 and database`);
-    await this.s3Service.deleteObject(doc.key);
-    return await this.docRepo.delete(id);
+    this.dataSource.transaction(async (manager) => {
+      const document = await manager.findOne(DocumentEntity, {
+        where: { id }
+      });
+      if (!document) {
+        throw new BadRequestException('Document not found');
+      }
+      this.logger.log(`Removing document id: ${id}, key: ${document.key} from S3 and database`);
+      await this.s3Service.deleteObject(document.key);
+      return await manager.delete(DocumentEntity, id)
+    })
   }
 }

@@ -19,6 +19,6 @@ export class UserAuthEntity extends BaseEntity {
     @Column({ nullable: true })
     passwordHash?: string;
 
-    @ManyToOne(() => UserEntity, (user) => user.authProviders, { cascade: true })
+    @ManyToOne(() => UserEntity, (user) => user.authProviders, { onDelete: 'CASCADE' })
     user: UserEntity;
 }

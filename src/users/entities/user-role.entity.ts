@@ -7,7 +7,7 @@ import { UserEntity } from "./user.entity";
 @Unique(['user', 'role'])
 export class UserRolesEntity extends BaseEntity {
 
-    @ManyToOne(() => UserEntity, (user) => user.id, { cascade: true })
+    @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE' })
     user: UserEntity;
 
     @ManyToOne(() => RoleEntity)

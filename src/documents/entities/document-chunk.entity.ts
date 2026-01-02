@@ -20,7 +20,9 @@ export class DocumentChunkEntity extends BaseEntity {
   })
   embedding: number[];
 
-  @ManyToOne(() => DocumentEntity, (document) => document.documentChunks)
+  @ManyToOne(() => DocumentEntity, (document) => document.documentChunks, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'documentId' })
   document: DocumentEntity;
 

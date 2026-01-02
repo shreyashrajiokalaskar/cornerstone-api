@@ -39,8 +39,6 @@ export class DocumentEntity extends BaseEntity {
   @Column()
   workspaceId: string;
 
-  @OneToMany(() => DocumentChunkEntity, (docChunk) => docChunk.document, {
-    cascade: true,
-  })
+  @OneToMany(() => DocumentChunkEntity, (docChunk) => docChunk.document)
   documentChunks: DocumentChunkEntity[];
 }

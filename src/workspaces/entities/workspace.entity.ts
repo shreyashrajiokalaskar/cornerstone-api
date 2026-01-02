@@ -19,9 +19,7 @@ export class WorkspaceEntity extends BaseEntity {
   @Column()
   ownerId: string;
 
-  @OneToMany(() => DocumentEntity, (docs) => docs.workspace, {
-    cascade: true,
-  })
+  @OneToMany(() => DocumentEntity, (docs) => docs.workspace)
   documents: DocumentEntity[];
 
   @Column({
@@ -30,8 +28,6 @@ export class WorkspaceEntity extends BaseEntity {
   })
   active: boolean;
 
-  @OneToMany(() => DocumentChunkEntity, (docChunk) => docChunk.workspace, {
-    cascade: true,
-  })
+  @OneToMany(() => DocumentChunkEntity, (docChunk) => docChunk.workspace)
   documentChunks: DocumentChunkEntity[];
 }
