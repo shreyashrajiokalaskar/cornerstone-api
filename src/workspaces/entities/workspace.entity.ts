@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../libs/common/src/entities/common.entity';
+import { ChatEntity } from '../../chat/entities/chat.entity';
 import { DocumentChunkEntity } from '../../documents/entities/document-chunk.entity';
 import { DocumentEntity } from '../../documents/entities/document.entity';
 import { UserEntity } from '../../users/entities/user.entity';
@@ -30,4 +31,7 @@ export class WorkspaceEntity extends BaseEntity {
 
   @OneToMany(() => DocumentChunkEntity, (docChunk) => docChunk.workspace)
   documentChunks: DocumentChunkEntity[];
+
+  @OneToMany(() => ChatEntity, (chat) => chat.workspace)
+  chats: ChatEntity[];
 }

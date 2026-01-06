@@ -1,5 +1,13 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from '../../../libs/common/src/entities/common.entity';
+import { MessageChunkEntity } from '../../chat/entities/message-chunk.entity';
 import { WorkspaceEntity } from '../../workspaces/entities/workspace.entity';
 import { DocumentEntity } from './document.entity';
 
@@ -37,4 +45,7 @@ export class DocumentChunkEntity extends BaseEntity {
   @Column()
   @Index()
   workspaceId: string;
+
+  @OneToMany(() => MessageChunkEntity, (source) => source.chunk)
+  messageChunk: MessageChunkEntity[];
 }

@@ -1,3 +1,4 @@
+import { RagService } from '@app/common/services/ai/rag.service';
 import {
   ConflictException,
   Injectable,
@@ -17,7 +18,8 @@ export class WorkspacesService {
   constructor(
     @InjectRepository(WorkspaceEntity)
     private workspaceRepo: Repository<WorkspaceEntity>,
-  ) { }
+    private ragService: RagService,
+  ) {}
 
   async create(createWorkspaceDto: CreateWorkspaceDto, ownerId: string) {
     const workspace = this.workspaceRepo.create({
@@ -31,7 +33,9 @@ export class WorkspacesService {
 
   findAll() {
     const queryBuilder = this.workspaceRepo.createQueryBuilder('workspace');
-    queryBuilder.orderBy('workspace.active', 'DESC').addOrderBy('workspace.updatedAt', 'DESC');
+    queryBuilder
+      .orderBy('workspace.active', 'DESC')
+      .addOrderBy('workspace.updatedAt', 'DESC');
     return queryBuilder.getMany();
   }
 
@@ -81,9 +85,8 @@ export class WorkspacesService {
       Object.assign(workspace, updateWorkspaceDto);
       const updatedWorkspace = await this.workspaceRepo.save(workspace);
       return updatedWorkspace;
-
     } catch (error) {
-      console.error("THIS IS MY ERROR", error);
+      console.error('THIS IS MY ERROR', error);
       this.logger.log('COULD NOT UPDATE WORKSPACE', error);
       throw error;
     }

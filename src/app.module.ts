@@ -9,6 +9,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     RedisModule,
     DocumentsModule,
     WorkspacesModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService,],

@@ -6,6 +6,7 @@ export enum AuthProvider {
 export enum ROLES {
   ADMIN = 'ADMIN',
   USER = 'USER',
+  ASSISTANT = 'ASSISTANT',
 }
 
 export enum AllowedMimeTypes {

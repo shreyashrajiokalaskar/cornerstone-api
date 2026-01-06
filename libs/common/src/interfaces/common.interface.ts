@@ -27,3 +27,11 @@ export interface IDocumentJob {
   key: string;
   workspaceId: string;
 }
+
+export interface ISimilarSearch {
+  id: string;
+  content: string;
+  document_name: string;
+  document_id: string;
+  similarity: any;
+}
