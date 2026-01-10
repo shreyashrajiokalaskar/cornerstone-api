@@ -5,33 +5,33 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
-  Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { UpdateChatDto } from './dto/update-chat.dto';
 
 @Controller('chat')
 export class ChatController {
+  private logger = new Logger(ChatController.name);
   constructor(private readonly chatService: ChatService) {}
 
-  @Post('session')
-  createChat(
-    @Body('workspaceId') workspaceId: string,
-    @CurrentUser() user: ICurrentUser,
-  ) {
-    return this.chatService.createChat(workspaceId, user.id);
-  }
-
-  @Post('sessions/:id')
+  @Post('sessions')
   chat(
-    @Param('id') id: string,
     @Body('question') question: string,
     @Body('workspaceId') workspaceId: string,
     @CurrentUser() user: ICurrentUser,
+    @Query('id') id?: string,
   ) {
-    return this.chatService.chat(id, question, workspaceId, user.id);
+    this.logger.log('Chat request received', {
+      question,
+      workspaceId,
+      userId: user.id,
+      chatId: id,
+      id,
+    });
+    return this.chatService.chat(question, workspaceId, user.id, id);
   }
 
   @Get('sessions/:id')
@@ -55,13 +55,13 @@ export class ChatController {
     return this.chatService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
-    return this.chatService.update(+id, updateChatDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
+  //   return this.chatService.update(+id, updateChatDto);
+  // }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chatService.remove(+id);
+  remove(@Param('id') id: string, @CurrentUser() user: ICurrentUser) {
+    return this.chatService.remove(id, user.id);
   }
 }

@@ -1,6 +1,7 @@
 import { RagService } from '@app/common';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/users/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { CHAT_ROLES } from './common.constant';
 import { UpdateChatDto } from './dto/update-chat.dto';
@@ -82,13 +83,20 @@ export class ChatService {
         content: rec.content,
         documents: Array.from(
           new Map(
-            rec.chunks.map((mc) => [mc.chunk.document.id, mc.chunk.document]),
+            rec.chunks.map((mc) => [
+              mc.chunk.documentId,
+              {
+                content: mc.chunk.content,
+                name: mc.chunk.document.name,
+                id: mc.chunk.document.id,
+              },
+            ]),
           ).values(),
         ),
       });
     });
 
-    return finalMessages;
+    return { chat, messages: finalMessages };
   }
 
   async findOne(id: number) {
@@ -99,17 +107,53 @@ export class ChatService {
     return `This action updates a #${id} chat`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} chat`;
+  async remove(chatId: string, userId: string) {
+    const chat = await this.chatRepo.findOne({
+      where: {
+        id: chatId,
+        userId,
+      },
+    });
+
+    if (!chat) {
+      throw new NotFoundException('No chats exists for this User!');
+    }
+
+    await this.chatRepo.delete(chatId);
+    return { message: 'Chat deleted successfully' };
   }
 
   async chat(
-    chatId: string,
     question: string,
     workspaceId: string,
     userId: string,
+    chatId?: string,
   ) {
-    const chat = await this.chatRepo.find({
+    if (!chatId) {
+      const workspace = await this.datasource
+        .getRepository(UserEntity)
+        .findOne({
+          where: {
+            id: userId,
+            workspaces: {
+              id: workspaceId,
+            },
+          },
+        });
+
+      if (!workspace) {
+        throw new NotFoundException('Workspace not found for this user!');
+      }
+
+      const chat = this.chatRepo.create({
+        workspaceId,
+        userId,
+        title: question.slice(0, 40) + (question.length > 40 ? '...' : ''),
+      });
+      await this.chatRepo.save(chat);
+      chatId = chat.id;
+    }
+    const chat = await this.chatRepo.findOne({
       where: {
         workspaceId,
         userId,
@@ -138,11 +182,17 @@ export class ChatService {
       take: 10,
     });
 
+    if (!chat.title) {
+      const msg = history[0].content;
+      chat.title = msg.slice(0, 40) + (msg.length > 40 ? '...' : '');
+      await this.chatRepo.save(chat);
+    }
+
     const rag = await this.ragService.ask(workspaceId, question, history);
 
     const assistant = this.messageRepo.create({
       chatId,
-      role: CHAT_ROLES.user,
+      role: CHAT_ROLES.assistant,
       content: rag?.answer,
     });
 
@@ -158,6 +208,7 @@ export class ChatService {
     return {
       answer: assistant.content,
       sources: rag!.sources,
+      chat,
     };
   }
 }
