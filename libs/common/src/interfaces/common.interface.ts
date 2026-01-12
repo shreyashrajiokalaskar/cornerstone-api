@@ -35,3 +35,9 @@ export interface ISimilarSearch {
   document_id: string;
   similarity: any;
 }
+
+export interface IAiConfig {
+  systemPrompt: string;
+  temperature: number;
+  topK: number;
+}

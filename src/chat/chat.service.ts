@@ -2,6 +2,7 @@ import { RagService } from '@app/common';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { WorkspaceEntity } from 'src/workspaces/entities/workspace.entity';
 import { DataSource, Repository } from 'typeorm';
 import { CHAT_ROLES } from './common.constant';
 import { UpdateChatDto } from './dto/update-chat.dto';
@@ -188,7 +189,19 @@ export class ChatService {
       await this.chatRepo.save(chat);
     }
 
-    const rag = await this.ragService.ask(workspaceId, question, history);
+    const workspace = await this.datasource
+      .getRepository(WorkspaceEntity)
+      .findOne({
+        where: {
+          id: workspaceId,
+        },
+      });
+
+    const rag = await this.ragService.ask(workspaceId, question, history, {
+      systemPrompt: workspace?.systemPrompt as string,
+      temperature: workspace?.temperature as number,
+      topK: workspace?.topK as number,
+    });
 
     const assistant = this.messageRepo.create({
       chatId,

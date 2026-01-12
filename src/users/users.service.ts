@@ -1,4 +1,5 @@
-import { AuthProvider, ROLES } from '@app/common';
+import { AuthProvider, generateToken, getHashToken, ROLES } from '@app/common';
+import { SesService } from '@app/common/services/aws/ses.service';
 import {
   ConflictException,
   Injectable,
@@ -11,6 +12,7 @@ import { RoleEntity } from 'src/roles/entities/role.entity';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { CreateInternalUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InviteEntity } from './entities/invite.entity';
 import { UserRolesEntity } from './entities/user-role.entity';
 import { UserEntity } from './entities/user.entity';
 
@@ -27,6 +29,9 @@ export class UsersService {
     @InjectRepository(RoleEntity)
     private roleRepo: Repository<RoleEntity>,
     private dataSource: DataSource,
+    @InjectRepository(InviteEntity)
+    private inviteRepo: Repository<InviteEntity>,
+    private sesService: SesService,
   ) {}
 
   async createInternalUser(createUserDto: CreateInternalUserDto) {
@@ -212,7 +217,7 @@ export class UsersService {
         role: true,
       },
     });
-    this.logger.verbose(`userRole-> ${userRole}`);
+    this.logger.verbose(`userRole-> ${userRole?.role.role}`);
 
     const role = await this.roleRepo.findOne({
       where: {
@@ -231,5 +236,120 @@ export class UsersService {
       password: authProvider?.passwordHash ?? '',
       role: userRole?.role.role,
     };
+  }
+
+  async inviteAdmin(email: string) {
+    const user = await this.userRolesRepo.findOne({
+      where: {
+        user: {
+          email,
+        },
+      },
+    });
+
+    if (user && user.role.role === ROLES.ADMIN) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const token = generateToken();
+
+    this.logger.verbose(
+      `Generated invite token for admin invitation -> ${token}`,
+    );
+
+    const invite = this.inviteRepo.create({
+      email,
+      tokenHash: getHashToken(token),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+    });
+
+    await this.inviteRepo.save(invite);
+    await this.sesService.sendInviteEmail(email, token);
+  }
+
+  async verifyInvite(token: string) {
+    this.logger.log(`Verifying invite token -> ${token}`);
+    const tokenHash = getHashToken(token);
+    this.logger.log(`Verifying tokenHash token -> ${tokenHash}`);
+
+    const invite = await this.inviteRepo.findOne({
+      where: {
+        tokenHash,
+      },
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Invalid invite token');
+    }
+
+    if (invite.expiresAt < new Date()) {
+      throw new ConflictException('Invite token has expired');
+    }
+
+    return { email: invite.email };
+  }
+
+  async findOneByInviteToken(token: string) {
+    const tokenHash = getHashToken(token);
+    const invite = await this.inviteRepo.findOne({
+      where: {
+        tokenHash,
+      },
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Invalid invite token');
+    }
+    return invite;
+  }
+
+  async createAdminUser(adminDetails: CreateInternalUserDto) {
+    await this.dataSource.transaction(async (manager: EntityManager) => {});
+    const user = await this.userRepo.findOne({
+      where: {
+        email: adminDetails.email,
+      },
+    });
+    if (user) {
+      const role = await this.userRolesRepo.findOne({
+        where: {
+          user: {
+            id: user?.id,
+          },
+        },
+      });
+      if (role?.role.role === ROLES.ADMIN) {
+        throw new ConflictException('Admin with this email already exists');
+      }
+    }
+
+    const admin = this.userRepo.create({
+      email: adminDetails.email,
+      name: adminDetails.name,
+    });
+    await this.userRepo.save(admin);
+
+    const adminAuth = this.authProviderRepo.create({
+      providerUserId: admin.id,
+      provider: AuthProvider.INTERNAL,
+      passwordHash: adminDetails.password,
+      user: admin,
+    });
+
+    await this.authProviderRepo.save(adminAuth);
+
+    const adminRole = await this.roleRepo.findOne({
+      where: {
+        role: ROLES.ADMIN,
+      },
+    });
+
+    const userRole = this.userRolesRepo.create({
+      user: admin,
+      role: adminRole as RoleEntity,
+    });
+    await this.userRolesRepo.save(userRole);
+    await this.inviteRepo.delete({ email: adminDetails.email });
+    return admin;
   }
 }

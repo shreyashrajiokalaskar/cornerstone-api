@@ -2,6 +2,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
 export async function hashPassword(password: string) {
+  console.log('Hashing password', password);
   return await bcrypt.hash(password, 12);
 }
 

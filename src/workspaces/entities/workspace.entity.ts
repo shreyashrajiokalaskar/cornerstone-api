@@ -34,4 +34,23 @@ export class WorkspaceEntity extends BaseEntity {
 
   @OneToMany(() => ChatEntity, (chat) => chat.workspace)
   chats: ChatEntity[];
+
+  @Column({
+    default: 0.7,
+    type: 'float',
+  })
+  temperature: number;
+
+  @Column({
+    default:
+      'Answer using only the context provided. Cite them like [1], [2]. If the context does not contain the answer, respond with "I do not know."',
+    type: 'text',
+  })
+  systemPrompt: string;
+
+  @Column({
+    type: 'integer',
+    default: 5,
+  })
+  topK: number;
 }

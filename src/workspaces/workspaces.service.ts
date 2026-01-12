@@ -1,4 +1,3 @@
-import { RagService } from '@app/common/services/ai/rag.service';
 import {
   ConflictException,
   Injectable,
@@ -18,7 +17,6 @@ export class WorkspacesService {
   constructor(
     @InjectRepository(WorkspaceEntity)
     private workspaceRepo: Repository<WorkspaceEntity>,
-    private ragService: RagService,
   ) {}
 
   async create(createWorkspaceDto: CreateWorkspaceDto, ownerId: string) {
@@ -60,6 +58,9 @@ export class WorkspacesService {
       description: workspace.description,
       ownerId: workspace.ownerId,
       active: workspace.active,
+      temperature: workspace.temperature,
+      systemPrompt: workspace.systemPrompt,
+      topK: workspace,
       documents: workspace.documents.map((document) => {
         return {
           id: document.id,

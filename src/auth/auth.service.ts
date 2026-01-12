@@ -140,4 +140,31 @@ export class AuthService {
     this.logger.verbose('Logging user ->', refreshToken);
     await this.redisService.del(`refresh:${refreshToken}`);
   }
+
+  async inviteAdmin(email: string) {
+    await this.userService.inviteAdmin(email);
+  }
+
+  async verifyInvite(token: string) {
+    return await this.userService.verifyInvite(token);
+  }
+
+  async setPassword(token: string, name: string, password: string) {
+    const hashedPassword = await hashPassword(password);
+    const invite = await this.userService.findOneByInviteToken(token);
+
+    if (!invite) {
+      throw new BadRequestException('Invalid invite token');
+    }
+    if (invite.used) {
+      throw new BadRequestException('Invite token has already been used');
+    }
+    const adminUser = await this.userService.createAdminUser({
+      email: invite.email,
+      name,
+      password: hashedPassword,
+    });
+
+    return adminUser;
+  }
 }

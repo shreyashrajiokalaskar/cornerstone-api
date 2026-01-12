@@ -64,4 +64,29 @@ export class AuthController {
   async logout(@Body('refreshToken') refreshToken: string) {
     await this.authService.logout(refreshToken);
   }
+
+  @UseGuards(AuthGuard)
+  @Post('admin/invite')
+  async inviteAdmin(@Body('email') email: string) {
+    return await this.authService.inviteAdmin(email);
+  }
+
+  @Public()
+  @Post('admin/verify-invite')
+  async verifyInvite(@Query('token') token: string) {
+    return await this.authService.verifyInvite(token);
+  }
+
+  @Public()
+  @Post('admin/register')
+  async setPassword(
+    @Body('token') token: string,
+    @Body('name') name: string,
+    @Body('password') password: string,
+  ) {
+    this.logger.log(
+      `Setting password for admin with token ${token} and name ${name}`,
+    );
+    return await this.authService.setPassword(token, name, password);
+  }
 }

@@ -1,4 +1,4 @@
-import { ISimilarSearch } from '@app/common';
+import { IAiConfig, ISimilarSearch } from '@app/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
@@ -26,7 +26,12 @@ export class RagService {
     });
   }
 
-  async ask(workspaceId: string, question: string, history: MessageEntity[]) {
+  async ask(
+    workspaceId: string,
+    question: string,
+    history: MessageEntity[],
+    aiConfig: IAiConfig,
+  ) {
     try {
       this.logger.log('Question', question, 'workspaceId', workspaceId);
       const embeddedQuestion = await this.embeddingService.embedText(question);
@@ -34,6 +39,7 @@ export class RagService {
         await this.vectorService.similaritySearch(
           workspaceId,
           embeddedQuestion,
+          aiConfig.topK,
         );
       // this.logger.debug(`Found ${similarChunks.length} similar chunks for the question.`);
       this.logger.log(`Found`, similarChunks);
@@ -53,8 +59,7 @@ export class RagService {
         | ChatCompletionSystemMessageParam[] = [
         {
           role: 'system',
-          content:
-            'Answer using only the context provided. Cite them like [1], [2]. If the context does not contain the answer, respond with "I do not know."',
+          content: aiConfig.systemPrompt,
         },
         ...(history.map((m: MessageEntity) => ({
           role: m.role,
@@ -75,6 +80,7 @@ export class RagService {
       const conversation = await this.client.chat.completions.create({
         model: 'gpt-4.1-mini',
         messages,
+        temperature: aiConfig.temperature,
       });
 
       //   return conversation.choices[0].message.content;

@@ -1,6 +1,8 @@
-import { DOC_STATUS, ISimilarSearch } from '@app/common';
+// import { DOC_STATUS, ISimilarSearch } from '@app/common';
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { DOC_STATUS } from '../../enum/common.enum';
+import { ISimilarSearch } from '../../interfaces/common.interface';
 
 @Injectable()
 export class VectorService {
