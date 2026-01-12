@@ -1,6 +1,7 @@
-import { RagService } from '@app/common';
+import { RagService, SqsService } from '@app/common';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { randomUUID } from 'crypto';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { WorkspaceEntity } from 'src/workspaces/entities/workspace.entity';
 import { DataSource, Repository } from 'typeorm';
@@ -22,6 +23,7 @@ export class ChatService {
     @InjectRepository(MessageChunkEntity)
     private messageChunk: Repository<MessageChunkEntity>,
     private datasource: DataSource,
+    private sqsService: SqsService,
   ) {}
 
   async createChat(workspaceId: string, userId: string): Promise<ChatEntity> {
@@ -223,5 +225,34 @@ export class ChatService {
       sources: rag!.sources,
       chat,
     };
+  }
+
+  async exportChat(chatId: string, userId: string) {
+    const chats = await this.chatRepo.findOne({
+      where: {
+        userId,
+        id: chatId,
+      },
+    });
+    if (!chats) {
+      throw new NotFoundException('No chats exists for this workspace!');
+    }
+
+    await this.sqsService.sendChatExportJob({
+      jobType: 'CHAT_EXPORT_PDF',
+      jobId: randomUUID().toString(),
+      workspaceId: chats.workspaceId,
+      chatId,
+      userId,
+      requestedAt: new Date(),
+      export: {
+        format: 'PDF',
+        includeSources: true,
+        includeTimestamps: true,
+        includeSystemMessages: true,
+      },
+    });
+
+    return { message: 'Chat export job has been queued successfully.' };
   }
 }

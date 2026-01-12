@@ -1,4 +1,9 @@
-import { EmbeddingService, RagService, VectorService } from '@app/common';
+import {
+  EmbeddingService,
+  RagService,
+  SqsService,
+  VectorService,
+} from '@app/common';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatController } from './chat.controller';
@@ -9,7 +14,13 @@ import { MessageEntity } from './entities/message.entity';
 
 @Module({
   controllers: [ChatController],
-  providers: [ChatService, RagService, VectorService, EmbeddingService],
+  providers: [
+    ChatService,
+    RagService,
+    VectorService,
+    EmbeddingService,
+    SqsService,
+  ],
   imports: [
     TypeOrmModule.forFeature([ChatEntity, MessageChunkEntity, MessageEntity]),
   ],

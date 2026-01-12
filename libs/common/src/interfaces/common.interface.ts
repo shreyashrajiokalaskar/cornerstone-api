@@ -41,3 +41,18 @@ export interface IAiConfig {
   temperature: number;
   topK: number;
 }
+
+export interface IChatExportJob {
+  jobType: 'CHAT_EXPORT_PDF';
+  jobId: string;
+  workspaceId: string;
+  chatId: string;
+  userId: string;
+  requestedAt: Date;
+  export: {
+    format: string;
+    includeSources: boolean;
+    includeTimestamps: boolean;
+    includeSystemMessages: boolean;
+  };
+}

@@ -55,6 +55,11 @@ export class ChatController {
     return this.chatService.findOne(+id);
   }
 
+  @Get('export/:id')
+  exportChat(@Param('id') chatId: string, @CurrentUser() user: ICurrentUser) {
+    return this.chatService.exportChat(chatId, user.id);
+  }
+
   // @Patch(':id')
   // update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
   //   return this.chatService.update(+id, updateChatDto);
