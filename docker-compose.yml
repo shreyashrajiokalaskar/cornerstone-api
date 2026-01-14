@@ -1,38 +1,52 @@
-
 services:
-  postgres:
-    image: postgres:15
-    container_name: cornerstone_postgres
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cornerstone
+  api:
+    build:
+      context: .
+      target: production
+    container_name: cornerstone-api
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: cornerstone_pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - "3333:3333"
+    env_file:
+      - .env
     depends_on:
       - postgres
+      - redis
+      - migrations
+    restart: unless-stopped
+
+
+  migrations:
+    build:
+      context: .
+      target: builder
+    container_name: cornerstone-migrations
+    command: npm run migration:run
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    restart: "no"
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: cornerstone-postgres
+    environment:
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ai_pass
+      POSTGRES_DB: ai_chat
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
 
   redis:
     image: redis:7
-    container_name: cornerstone_redis
-    ports:
-      - "6379:6379"
+    container_name: cornerstone-redis
+    restart: unless-stopped
 
 volumes:
   postgres_data:
-  pgadmin_data:
+
+

@@ -1,3 +1,4 @@
+import { Public } from '@app/common';
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
@@ -5,8 +6,9 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
+  @Public()
+  @Get('health-check')
   getHello() {
-    return this.appService.getHello();
+    return this.appService.healthCheck();
   }
 }
