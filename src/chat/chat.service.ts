@@ -24,7 +24,7 @@ export class ChatService {
     private messageChunk: Repository<MessageChunkEntity>,
     private datasource: DataSource,
     private sqsService: SqsService,
-  ) {}
+  ) { }
 
   async createChat(workspaceId: string, userId: string): Promise<ChatEntity> {
     this.logger.log(workspaceId);
@@ -137,7 +137,6 @@ export class ChatService {
         .getRepository(UserEntity)
         .findOne({
           where: {
-            id: userId,
             workspaces: {
               id: workspaceId,
             },
