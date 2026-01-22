@@ -72,7 +72,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('admin/verify-invite')
+  @Get('admin/verify-invite')
   async verifyInvite(@Query('token') token: string) {
     return await this.authService.verifyInvite(token);
   }
