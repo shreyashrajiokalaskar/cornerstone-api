@@ -1,4 +1,8 @@
-import { DbExceptionFilter, ExceptionErrorFilter, ReponseInterceptor } from '@app/common';
+import {
+  DbExceptionFilter,
+  ExceptionErrorFilter,
+  ReponseInterceptor,
+} from '@app/common';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -22,7 +26,7 @@ async function bootstrap() {
   app.useGlobalFilters(new ExceptionErrorFilter());
   app.useGlobalFilters(new DbExceptionFilter());
   app.useLogger(['debug', 'error', 'fatal', 'log', 'verbose', 'warn']);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
   );
