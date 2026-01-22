@@ -21,7 +21,7 @@ export class SesService {
   }
 
   async sendInviteEmail(email: string, token: string) {
-    const link = `https://app.cornerstone.ai/admin/activate?token=${token}`;
+    const link = `https://pucho.netlify.app/auth/admin/activate?token=${token}`;
     console.log(
       `Sending invite email to ${email} with link: ${link} with token: ${token}`,
     );
@@ -38,7 +38,7 @@ export class SesService {
             Html: {
               Data: `
               <h2>You’ve been invited</h2>
-              <p>You were invited to join Cornerstone as an Admin.</p>
+              <p>You were invited to join Pucho as an Admin.</p>
               <p>
                 <a href="${link}" style="padding:12px 18px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:6px">
                   Activate Admin Account
