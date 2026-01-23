@@ -1,5 +1,5 @@
 import type { ICurrentUser } from '@app/common';
-import { CurrentUser } from '@app/common';
+import { CurrentUser, Public } from '@app/common';
 import {
   Body,
   Controller,
@@ -48,6 +48,18 @@ export class ChatController {
     @CurrentUser() user: ICurrentUser,
   ) {
     return this.chatService.getChatDetails(chatId, user.id);
+  }
+
+  @Public()
+  @Get('export')
+  getChatDetailsForExport(
+    @Query('chatId') chatId: string,
+    @Query('userId') userId: string,
+  ) {
+    this.logger.log(
+      `Calling getChatDetails from Chat Controller for Export Chat with chatId:${chatId} and userId:${userId}`,
+    );
+    return this.chatService.getChatDetails(chatId, userId);
   }
 
   @Get(':id')
