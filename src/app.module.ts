@@ -28,7 +28,7 @@ import { ChatModule } from './chat/chat.module';
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService,],
+  providers: [AppService],
   exports: [],
 })
-export class AppModule { }
+export class AppModule {}

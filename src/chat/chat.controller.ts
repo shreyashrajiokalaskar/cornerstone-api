@@ -1,5 +1,5 @@
 import type { ICurrentUser } from '@app/common';
-import { CurrentUser, Public } from '@app/common';
+import { CurrentUser, InternalGuard } from '@app/common';
 import {
   Body,
   Controller,
@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 
@@ -50,8 +51,8 @@ export class ChatController {
     return this.chatService.getChatDetails(chatId, user.id);
   }
 
-  @Public()
-  @Get('export')
+  @UseGuards(InternalGuard)
+  @Get('export-chat')
   getChatDetailsForExport(
     @Query('chatId') chatId: string,
     @Query('userId') userId: string,
