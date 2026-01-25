@@ -10,6 +10,7 @@ import { UpdateChatDto } from './dto/update-chat.dto';
 import { ChatEntity } from './entities/chat.entity';
 import { MessageChunkEntity } from './entities/message-chunk.entity';
 import { MessageEntity } from './entities/message.entity';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatService {
@@ -24,7 +25,8 @@ export class ChatService {
     private messageChunk: Repository<MessageChunkEntity>,
     private datasource: DataSource,
     private sqsService: SqsService,
-  ) { }
+    private userService: UsersService,
+  ) {}
 
   async createChat(workspaceId: string, userId: string): Promise<ChatEntity> {
     this.logger.log(workspaceId);
@@ -64,6 +66,8 @@ export class ChatService {
       throw new NotFoundException('No chats exists for this User!');
     }
 
+    const email = await this.userService.findOne(userId);
+
     const messageRepo = this.datasource
       .getRepository(MessageEntity)
       .createQueryBuilder('message');
@@ -99,10 +103,10 @@ export class ChatService {
       });
     });
 
-    return { chat, messages: finalMessages };
+    return { chat, messages: finalMessages, email };
   }
 
-  async findOne(id: number) {
+  findOne(id: number) {
     return `This action returns a #${id} chat`;
   }
 

@@ -11,6 +11,7 @@ import { ChatService } from './chat.service';
 import { ChatEntity } from './entities/chat.entity';
 import { MessageChunkEntity } from './entities/message-chunk.entity';
 import { MessageEntity } from './entities/message.entity';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   controllers: [ChatController],
@@ -22,6 +23,7 @@ import { MessageEntity } from './entities/message.entity';
     SqsService,
   ],
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([ChatEntity, MessageChunkEntity, MessageEntity]),
   ],
 })
