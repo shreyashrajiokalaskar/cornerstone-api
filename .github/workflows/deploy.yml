@@ -33,31 +33,6 @@ jobs:
             --platform linux/amd64 \
             -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/cornerstone-api:latest \
             --push .
-
-      - name: Generate API runtime env from SSM
-        run: |
-          cd cornerstone-infra
-          git fetch origin
-          git reset --hard origin/main
-
-          cp api.env api.runtime.env
-
-          aws ssm get-parameters-by-path \
-            --path "/cornerstone/common" \
-            --with-decryption \
-            --query "Parameters[*].[Name,Value]" \
-            --output text \
-          | sed 's#.*/##' \
-          | awk '{print $1"="$2}' >> api.runtime.env
-
-          aws ssm get-parameters-by-path \
-            --path "/cornerstone/api" \
-            --with-decryption \
-            --query "Parameters[*].[Name,Value]" \
-            --output text \
-          | sed 's#.*/##' \
-          | awk '{print $1"="$2}' >> api.runtime.env
-
       # Deploy on EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
@@ -73,6 +48,28 @@ jobs:
             echo "Pulling latest infra changes..."
             git fetch origin
             git reset --hard origin/main
+
+            echo "Generating env files..."
+            cp api.env api.runtime.env
+            cp worker.env worker.runtime.env
+
+            aws ssm get-parameters-by-path \
+              --path "/cornerstone/common" \
+              --with-decryption \
+            | jq -r '.Parameters[] | "\(.Name | split("/")[-1])=\(.Value)"' \
+            >> api.runtime.env
+
+            aws ssm get-parameters-by-path \
+              --path "/cornerstone/api" \
+              --with-decryption \
+            | jq -r '.Parameters[] | "\(.Name | split("/")[-1])=\(.Value)"' \
+            >> api.runtime.env
+
+            aws ssm get-parameters-by-path \
+              --path "/cornerstone/worker" \
+              --with-decryption \
+            | jq -r '.Parameters[] | "\(.Name | split("/")[-1])=\(.Value)"' \
+            >> worker.runtime.env
 
             echo "Stopping old containers..."
             docker compose down
