@@ -37,11 +37,8 @@ export class AuthGuard implements CanActivate {
     const isInternal = request.headers['x-internal-request'];
     this.logger.log(`is request internal:${isInternal}`);
     const secret = isInternal
-      ? this.configService.get('SERVICE_JWT_SECRET')
+      ? this.configService.get('INTERNAL_JWT_SECRET')
       : this.configService.get('JWT_SECRET');
-    this.logger.log(
-      `${this.configService.get('SERVICE_JWT_SECRET')} The secret is ${this.configService.get('JWT_SECRET')}`,
-    );
     try {
       const user = await this.jwtService.verifyAsync(token, {
         secret: secret,
