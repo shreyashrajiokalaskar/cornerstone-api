@@ -35,6 +35,18 @@ export class ChatController {
     return this.chatService.chat(question, workspaceId, user.id, id);
   }
 
+  @UseGuards(InternalGuard)
+  @Get('export-chat')
+  getChatDetailsForExport(
+    @Query('chatId') chatId: string,
+    @Query('userId') userId: string,
+  ) {
+    this.logger.log(
+      `Calling getChatDetails from Chat Controller for Export Chat with chatId:${chatId} and userId:${userId}`,
+    );
+    return this.chatService.getChatDetails(chatId, userId);
+  }
+
   @Get('sessions/:id')
   findAllSessions(
     @Param('id') workspaceId: string,
@@ -49,18 +61,6 @@ export class ChatController {
     @CurrentUser() user: ICurrentUser,
   ) {
     return this.chatService.getChatDetails(chatId, user.id);
-  }
-
-  @UseGuards(InternalGuard)
-  @Get('export-chat')
-  getChatDetailsForExport(
-    @Query('chatId') chatId: string,
-    @Query('userId') userId: string,
-  ) {
-    this.logger.log(
-      `Calling getChatDetails from Chat Controller for Export Chat with chatId:${chatId} and userId:${userId}`,
-    );
-    return this.chatService.getChatDetails(chatId, userId);
   }
 
   @Get(':id')
