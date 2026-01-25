@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +13,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  private logger = new Logger(AuthGuard.name);
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
@@ -28,10 +30,12 @@ export class AuthGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
+    this.logger.log(`This is the token:${token}`);
     if (!token) {
       throw new UnauthorizedException();
     }
     const isInternal = request.headers['x-internal-request'];
+    this.logger.log(`is request internal:${isInternal}`);
     const secret = isInternal
       ? this.configService.get('SERVICE_JWT_SECRET')
       : this.configService.get('JWT_SECRET');
