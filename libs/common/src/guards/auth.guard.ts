@@ -31,14 +31,27 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException();
     }
+    const isInternal = request.headers['x-internal-request'];
+    const secret = isInternal
+      ? this.configService.get('SERVICE_JWT_SECRET')
+      : this.configService.get('JWT_SECRET');
     try {
       const user = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get('JWT_SECRET'),
+        secret,
       });
       request['user'] = { ...user };
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Token has expired!');
+      console.error('JWT ERROR:', error.name, error.message);
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Token has expired');
+      }
+
+      if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      throw new UnauthorizedException('Unauthorized');
     }
   }
 
