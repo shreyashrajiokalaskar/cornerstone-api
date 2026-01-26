@@ -15,7 +15,7 @@ import { ChatService } from './chat.service';
 
 @Controller('chat')
 export class ChatController {
-  private logger = new Logger(ChatController.name);
+  private readonly logger = new Logger(ChatController.name);
   constructor(private readonly chatService: ChatService) {}
 
   @Post('sessions')
@@ -52,6 +52,7 @@ export class ChatController {
     @Param('id') workspaceId: string,
     @CurrentUser() user: ICurrentUser,
   ) {
+    this.logger.log('findAllSessions called', { workspaceId, userId: user.id });
     return this.chatService.findAllSessions(workspaceId, user.id);
   }
 
@@ -60,16 +61,19 @@ export class ChatController {
     @Param('id') chatId: string,
     @CurrentUser() user: ICurrentUser,
   ) {
+    this.logger.log('getChatDetails called', { chatId, userId: user.id });
     return this.chatService.getChatDetails(chatId, user.id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
+    this.logger.log('findOne called for chat id', id);
     return this.chatService.findOne(+id);
   }
 
   @Get('export/:id')
   exportChat(@Param('id') chatId: string, @CurrentUser() user: ICurrentUser) {
+    this.logger.log('exportChat called', { chatId, userId: user.id });
     return this.chatService.exportChat(chatId, user.id);
   }
 
@@ -80,6 +84,7 @@ export class ChatController {
 
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() user: ICurrentUser) {
+    this.logger.log('remove chat called', { chatId: id, userId: user.id });
     return this.chatService.remove(id, user.id);
   }
 }

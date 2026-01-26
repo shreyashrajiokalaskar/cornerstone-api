@@ -1,8 +1,11 @@
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('AuthConfig');
 
 export async function hashPassword(password: string) {
-  console.log('Hashing password', password);
+  logger.debug('Hashing password', { length: password.length });
   return await bcrypt.hash(password, 12);
 }
 

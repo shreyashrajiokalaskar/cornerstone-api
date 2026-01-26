@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
@@ -9,6 +9,7 @@ export class GoogleAuthService {
   private readonly clientSecret: string;
   private readonly redirectUri: string;
   private readonly scopes: string[];
+  private readonly logger = new Logger(GoogleAuthService.name);
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.get<string>('GOOGLE_CLIENT_ID')!;
@@ -17,6 +18,7 @@ export class GoogleAuthService {
     this.scopes = this.configService
       .get<string>('GOOGLE_SCOPES_API')!
       .split(',');
+    this.logger.log('GoogleAuthService initialized');
   }
 
   private getAuthClient(): OAuth2Client {
@@ -35,6 +37,7 @@ export class GoogleAuthService {
       state,
     });
 
+    this.logger.log('Generated OAuth2 client url', { state, url });
     return { url, state };
   }
 
@@ -48,6 +51,7 @@ export class GoogleAuthService {
 
     const { tokens } = await client.getToken(code);
     if (!tokens.id_token) {
+      this.logger.warn('verifyGoogleCode: missing id_token');
       throw new UnauthorizedException('Invalid Google token');
     }
 
@@ -58,6 +62,7 @@ export class GoogleAuthService {
 
     const payload = ticket.getPayload();
     if (!payload?.email || !payload?.sub) {
+      this.logger.warn('verifyGoogleCode: invalid payload', payload);
       throw new UnauthorizedException('Invalid Google user data');
     }
 

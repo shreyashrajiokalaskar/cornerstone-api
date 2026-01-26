@@ -15,22 +15,28 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 
 @Controller('documents')
 export class DocumentsController {
-  private logger = new Logger(DocumentsController.name)
+  private readonly logger = new Logger(DocumentsController.name);
 
-  constructor(private readonly documentsService: DocumentsService) { }
+  constructor(private readonly documentsService: DocumentsService) {}
 
   @Post('upload')
   getPresignedUrl(@Body() getPresignedUrlDto: GetPresignedUrlDto) {
+    this.logger.log('createUploadLink called', getPresignedUrlDto);
     return this.documentsService.createUploadLink(getPresignedUrlDto);
   }
 
   @Post('uploaded')
   fileUploaded(@Body() createDocumentDto: CreateDocumentDto) {
+    this.logger.log('fileUploaded called', {
+      name: createDocumentDto.name,
+      workspaceId: createDocumentDto.workspaceId,
+    });
     return this.documentsService.fileUploaded(createDocumentDto);
   }
 
   @Get()
   findAll() {
+    this.logger.log('findAll documents called');
     return this.documentsService.findAll();
   }
 
@@ -51,6 +57,10 @@ export class DocumentsController {
     @Param('id') id: string,
     @Body() updateDocumentDto: UpdateDocumentDto,
   ) {
+    this.logger.log('update document called', {
+      id,
+      payload: updateDocumentDto,
+    });
     return this.documentsService.update(+id, updateDocumentDto);
   }
 

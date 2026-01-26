@@ -3,17 +3,19 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 
 @Injectable()
 export class InternalGuard implements CanActivate {
+  private readonly logger = new Logger(InternalGuard.name);
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const req = context.switchToHttp().getRequest();
     const user = req.user;
-    console.log('User from Request', user);
+    this.logger.debug('User from Request', user);
 
     if (!req.headers['x-internal-request']) {
       throw new ForbiddenException('Internal header missing');

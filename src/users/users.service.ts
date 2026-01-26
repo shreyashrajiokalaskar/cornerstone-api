@@ -140,6 +140,7 @@ export class UsersService {
   }
 
   async findAll() {
+    this.logger.log('findAll users called');
     return await this.userRepo.find({
       select: ['createdAt', 'email', 'id', 'name', 'updatedAt'],
     });
@@ -153,13 +154,14 @@ export class UsersService {
       select: ['createdAt', 'email', 'id', 'name', 'updatedAt'],
     });
     if (!user) {
-      console.log('USER NOT FOUND!');
+      this.logger.warn('USER NOT FOUND!', id);
       throw new NotFoundException('User not Found!');
     }
     return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
+    this.logger.log('update user called', { id, payload: updateUserDto });
     const user = await this.userRepo.findOne({
       where: {
         id: id,

@@ -13,7 +13,7 @@ import { VectorService } from './vector.service';
 
 @Injectable()
 export class RagService {
-  private logger = new Logger(RagService.name);
+  private readonly logger = new Logger(RagService.name);
   client!: OpenAI;
 
   constructor(
@@ -33,7 +33,7 @@ export class RagService {
     aiConfig: IAiConfig,
   ) {
     try {
-      this.logger.log('Question', question, 'workspaceId', workspaceId);
+      this.logger.log('Question received', { question, workspaceId });
       const embeddedQuestion = await this.embeddingService.embedText(question);
       const similarChunks: ISimilarSearch[] =
         await this.vectorService.similaritySearch(
@@ -42,7 +42,9 @@ export class RagService {
           aiConfig.topK,
         );
       // this.logger.debug(`Found ${similarChunks.length} similar chunks for the question.`);
-      this.logger.log(`Found`, similarChunks);
+      this.logger.debug('Found similar chunks', {
+        count: similarChunks.length,
+      });
 
       // const context = similarChunks.map((chunk) => chunk.content).join("\n\n");
       // const context = similarChunks
@@ -52,7 +54,7 @@ export class RagService {
       const context: string = similarChunks
         .map((c) => c.content)
         .join('\n---\n');
-      this.logger.log('context', context);
+      this.logger.debug('context', { length: context.length });
       const messages:
         | ChatCompletionUserMessageParam[]
         | ChatCompletionAssistantMessageParam[]
@@ -95,7 +97,8 @@ export class RagService {
         })),
       };
     } catch (error) {
-      this.logger.log(error);
+      this.logger.error('RagService.ask failed', error);
+      throw error;
     }
   }
 

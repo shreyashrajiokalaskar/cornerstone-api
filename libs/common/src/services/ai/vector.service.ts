@@ -1,11 +1,12 @@
 // import { DOC_STATUS, ISimilarSearch } from '@app/common';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { DOC_STATUS } from '../../enum/common.enum';
 import { ISimilarSearch } from '../../interfaces/common.interface';
 
 @Injectable()
 export class VectorService {
+  private readonly logger = new Logger(VectorService.name);
   constructor(private datasource: DataSource) {}
 
   async similaritySearch(
@@ -14,6 +15,7 @@ export class VectorService {
     limit = 5,
   ): Promise<ISimilarSearch[]> {
     const vector = `[${embedding.join(',')}]`;
+    this.logger.debug('similaritySearch called', { workspaceId, limit });
 
     return await this.datasource.query(
       `

@@ -14,7 +14,7 @@ import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  private logger = new Logger(UsersController.name);
+  private readonly logger = new Logger(UsersController.name);
 
   constructor(private readonly usersService: UsersService) {}
 
@@ -27,16 +27,19 @@ export class UsersController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
+    this.logger.log('findOne user called', id);
     return this.usersService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    this.logger.log('update user called', { id, payload: updateUserDto });
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
+    this.logger.log('remove user called', id);
     return this.usersService.remove(id);
   }
 }

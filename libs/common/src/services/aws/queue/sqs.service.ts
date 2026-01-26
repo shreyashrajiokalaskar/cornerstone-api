@@ -4,10 +4,12 @@ import {
 } from '@app/common/interfaces/common.interface';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { QueueService } from './sqs.interface';
+import { Logger } from '@nestjs/common';
 
 export class SqsService implements QueueService {
   client: SQSClient;
   private queueUrl: string;
+  private readonly logger = new Logger(SqsService.name);
 
   constructor() {
     this.client = new SQSClient({
@@ -20,10 +22,11 @@ export class SqsService implements QueueService {
 
     this.queueUrl = process.env['DOC_QUEUE_URL'] as string;
 
-    console.log('SQS connected to:', this.queueUrl);
+    this.logger.log('SQS connected to', this.queueUrl);
   }
 
   async sendDocumentJob(payload: IDocumentJob): Promise<void> {
+    this.logger.debug('sendDocumentJob', { queueUrl: this.queueUrl, payload });
     await this.client.send(
       new SendMessageCommand({
         QueueUrl: this.queueUrl,
@@ -33,6 +36,7 @@ export class SqsService implements QueueService {
   }
 
   async sendChatExportJob(chatDetails: IChatExportJob): Promise<void> {
+    this.logger.debug('sendChatExportJob', { payload: chatDetails });
     await this.client.send(
       new SendMessageCommand({
         QueueUrl: process.env['CHAT_EXPORT_QUEUE_URL'] as string,

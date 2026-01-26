@@ -1,10 +1,11 @@
 import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SesService {
   client: SESClient;
+  private readonly logger = new Logger(SesService.name);
 
   constructor(private configService: ConfigService) {
     this.client = new SESClient({
@@ -22,9 +23,7 @@ export class SesService {
 
   async sendInviteEmail(email: string, token: string) {
     const link = `https://pucho.netlify.app/auth/admin/activate?token=${token}`;
-    console.log(
-      `Sending invite email to ${email} with link: ${link} with token: ${token}`,
-    );
+    this.logger.log(`Sending invite email to ${email}`, { link, token });
 
     await this.client.send(
       new SendEmailCommand({

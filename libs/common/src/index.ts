@@ -16,3 +16,4 @@ export * from './services/aws/queue/sqs.service';
 export * from './services/aws/s3.service';
 export * from './utils/common.utils';
 export * from './guards/internal/internal.guard';
+export * from './interceptors/request-id/request-id.middleware';

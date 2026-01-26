@@ -14,7 +14,7 @@ import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatService {
-  private logger = new Logger(ChatService.name);
+  private readonly logger = new Logger(ChatService.name);
 
   constructor(
     @InjectRepository(ChatEntity) private chatRepo: Repository<ChatEntity>,
@@ -80,7 +80,7 @@ export class ChatService {
       .where('message.chatId = :chatId', { chatId })
       .orderBy('message.createdAt', 'ASC')
       .getMany();
-    console.log('records', records);
+    this.logger.debug('records', records);
 
     const finalMessages: any[] = [];
     records.map((rec) => {
@@ -107,10 +107,12 @@ export class ChatService {
   }
 
   findOne(id: number) {
+    this.logger.log('findOne called for chat id', id);
     return `This action returns a #${id} chat`;
   }
 
-  update(id: number, updateChatDto: UpdateChatDto) {
+  update(id: number, _updateChatDto: UpdateChatDto) {
+    this.logger.log('update called for chat id', id);
     return `This action updates a #${id} chat`;
   }
 
@@ -127,6 +129,7 @@ export class ChatService {
     }
 
     await this.chatRepo.delete(chatId);
+    this.logger.log('Chat deleted', { chatId, userId });
     return { message: 'Chat deleted successfully' };
   }
 

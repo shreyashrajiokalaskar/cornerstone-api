@@ -8,7 +8,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AllowedMimeTypes, IPresignedUrl } from '../..';
 
@@ -16,13 +16,16 @@ import { AllowedMimeTypes, IPresignedUrl } from '../..';
 export class S3Service {
   private client: S3Client;
   private bucket: string;
+  private readonly logger = new Logger(S3Service.name);
 
   constructor(private configService: ConfigService) {
     this.client = new S3Client({
       region: this.configService.get('AWS_REGION') as string,
       credentials: {
         accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID') as string,
-        secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY') as string,
+        secretAccessKey: this.configService.get(
+          'AWS_SECRET_ACCESS_KEY',
+        ) as string,
       },
     });
 
@@ -30,6 +33,7 @@ export class S3Service {
   }
 
   async getObject(key: string): Promise<IPresignedUrl> {
+    this.logger.log('getObject called', key);
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -46,6 +50,7 @@ export class S3Service {
     contentType: AllowedMimeTypes,
     checksum: string,
   ): Promise<IPresignedUrl> {
+    this.logger.log('putObject called', { key, contentType });
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -61,13 +66,13 @@ export class S3Service {
   }
 
   async deleteObject(key: string): Promise<DeleteObjectCommandOutput> {
+    this.logger.log('deleteObject called', key);
     const command = new DeleteObjectCommand({
       Bucket: this.bucket,
-      Key: key
-    })
+      Key: key,
+    });
     return await this.client.send(command);
   }
-
 
   private async getPresignedUrl(
     command: GetObjectCommand | PutObjectCommand | DeleteObjectCommand,

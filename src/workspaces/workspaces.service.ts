@@ -87,8 +87,7 @@ export class WorkspacesService {
       const updatedWorkspace = await this.workspaceRepo.save(workspace);
       return updatedWorkspace;
     } catch (error) {
-      console.error('THIS IS MY ERROR', error);
-      this.logger.log('COULD NOT UPDATE WORKSPACE', error);
+      this.logger.error('COULD NOT UPDATE WORKSPACE', error as any);
       throw error;
     }
   }
