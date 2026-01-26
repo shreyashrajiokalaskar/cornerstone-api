@@ -217,8 +217,6 @@ export class ChatService {
       content: rag?.answer,
     });
 
-    this.logger.log('RAG', rag);
-
     await this.messageRepo.save(assistant);
     const chunks = rag!.chunks.map((chunk) => ({
       messageId: assistant.id,
