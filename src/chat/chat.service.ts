@@ -1,11 +1,19 @@
 import { RagService, SqsService } from '@app/common';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { WorkspaceEntity } from 'src/workspaces/entities/workspace.entity';
 import { DataSource, Repository } from 'typeorm';
-import { CHAT_ROLES } from './common.constant';
+import {
+  AI_LIMITS,
+  CHAT_ROLES,
+} from '../../libs/common/src/constants/common.constant';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { ChatEntity } from './entities/chat.entity';
 import { MessageChunkEntity } from './entities/message-chunk.entity';
@@ -171,6 +179,10 @@ export class ChatService {
     });
     if (!chat) {
       throw new NotFoundException('No chats exists for this workspace!');
+    }
+
+    if (question.length > AI_LIMITS.MAX_MESSAGE_LENGTH) {
+      throw new BadRequestException('Message too long');
     }
 
     const message = this.messageRepo.create({

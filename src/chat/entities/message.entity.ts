@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../libs/common/src/index';
-import { CHAT_ROLES } from '../common.constant';
+import { CHAT_ROLES } from '../../../libs/common/src/constants/common.constant';
 import { ChatEntity } from '../entities/chat.entity';
 import { MessageChunkEntity } from './message-chunk.entity';
 

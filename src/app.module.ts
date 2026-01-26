@@ -11,6 +11,8 @@ import { UsersModule } from './users/users.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { ChatModule } from './chat/chat.module';
 import { RequestIdMiddleware } from '@app/common';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 
 @Module({
   imports: [
@@ -20,6 +22,18 @@ import { RequestIdMiddleware } from '@app/common';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: typeOrmConfig,
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 10,
+        },
+      ],
+      storage: new ThrottlerStorageRedisService({
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      }),
     }),
     UsersModule,
     AuthModule,

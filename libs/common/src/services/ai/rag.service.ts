@@ -1,4 +1,10 @@
-import { IAiConfig, ISimilarSearch } from '@app/common';
+import {
+  AI_LIMITS,
+  estimateTokens,
+  IAiConfig,
+  ISimilarSearch,
+  truncateContext,
+} from '@app/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
@@ -51,9 +57,14 @@ export class RagService {
       //   .map((c, i) => `[${i + 1}] ${c.content} (Source: ${c.document_name})`)
       //   .join('\n\n');
 
-      const context: string = similarChunks
-        .map((c) => c.content)
-        .join('\n---\n');
+      let context: string = similarChunks.map((c) => c.content).join('\n---\n');
+
+      const contextTokens = estimateTokens(context);
+
+      if (contextTokens > AI_LIMITS.MAX_CONTEXT_TOKENS) {
+        const reducedChunks = truncateContext(similarChunks);
+        context = reducedChunks.map((chunk) => chunk.content).join('\n---\n');
+      }
       this.logger.debug('context', { length: context.length });
       const messages:
         | ChatCompletionUserMessageParam[]
