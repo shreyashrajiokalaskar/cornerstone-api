@@ -2,33 +2,97 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# Cornerstone API
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A robust, scalable backend API built with [NestJS](https://nestjs.com) and TypeScript for managing workspace collaboration, documents, chat, and AI-powered features.
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Cornerstone API is a comprehensive backend solution designed to support collaborative workspaces with document management, real-time chat, user authentication, and AI integrations. It leverages modern technologies including TypeORM, PostgreSQL, Redis, AWS services (S3, SES, SQS), and OpenAI to deliver a production-ready platform.
 
-## Project setup
+## Features
+
+- **Authentication & Authorization**: JWT-based authentication with Google OAuth integration and role-based access control
+- **Workspace Management**: Multi-workspace support with user role assignments
+- **Document Management**: Upload, store, and manage documents with vector indexing
+- **Real-time Chat**: Chat flow system for user communication
+- **User Management**: Comprehensive user profiles with invitation system
+- **AI Integration**: OpenAI integration for AI-powered features
+- **Cloud Storage**: AWS S3 integration for file storage
+- **Email Services**: AWS SES for email communications
+- **Message Queue**: AWS SQS for asynchronous processing
+- **Caching**: Redis integration for performance optimization
+- **Rate Limiting**: Request throttling with Redis storage
+
+## Technology Stack
+
+- **Runtime**: Node.js with TypeScript
+- **Framework**: NestJS 11.x
+- **ORM**: TypeORM with PostgreSQL
+- **Authentication**: JWT, Passport, Google Auth
+- **Cache**: Redis (ioredis)
+- **AWS Services**: S3, SES, SQS
+- **AI**: OpenAI API
+- **Testing**: Jest
+- **Code Quality**: ESLint, Prettier
+
+## Project Setup
 
 ```bash
 $ npm install
+```
+
+## Environment Configuration
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=cornerstone_db
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# JWT
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRATION=3600
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# AWS
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=your_bucket_name
+
+# OpenAI
+OPENAI_API_KEY=your_openai_api_key
+
+# Application
+PORT=3000
+NODE_ENV=development
+```
+
+## Database Setup
+
+Run migrations to set up the database schema:
+
+```bash
+# Run all pending migrations
+$ npm run migration:run
+
+# Generate a new migration after schema changes
+$ npm run migration:generate -- src/migrations/MigrationName
+
+# Revert the last migration
+$ npm run migration:revert
 ```
 
 ## Compile and run the project
@@ -59,40 +123,101 @@ $ npm run test:cov
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Docker Deployment
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+The project includes Dockerfiles for containerized deployment:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Build the application image
+$ docker build -f Dockerfile -t cornerstone-api:latest .
+
+# Run the container
+$ docker run -p 3000:3000 --env-file .env cornerstone-api:latest
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Database Migrations in Docker
+
+```bash
+# Build and run migrations
+$ docker build -f Dockerfile.migrations -t cornerstone-api-migrations:latest .
+$ docker run --env-file .env cornerstone-api-migrations:latest
+```
+
+### Production Deployment
+
+For production environments:
+
+1. Ensure all environment variables are properly configured
+2. Run database migrations before deploying
+3. Use a process manager like PM2 or systemd
+4. Set up SSL/TLS certificates
+5. Configure proper logging and monitoring
+6. Use environment-specific build: `npm run start:prod`
+
+## Project Structure
+
+```
+src/
+├── auth/              # Authentication & JWT modules
+├── chat/              # Chat flow and messaging
+├── documents/         # Document management
+├── users/             # User management
+├── workspaces/        # Workspace management
+├── redis/             # Redis integration
+├── config/            # TypeORM and app configuration
+├── migrations/        # Database migrations
+├── roles/             # Role definitions
+└── main.ts            # Application entry point
+
+libs/
+└── common/            # Shared utilities, decorators, guards, filters
+```
+
+## API Modules
+
+### Auth Module
+Handles user authentication, JWT token generation, and OAuth integration.
+
+### Chat Module
+Manages chat flows and real-time messaging between users.
+
+### Documents Module
+Provides document upload, storage, retrieval, and vector indexing for AI-powered search.
+
+### Users Module
+Manages user profiles, invitations, and user-related operations.
+
+### Workspaces Module
+Handles multi-workspace functionality and workspace member management.
+
+### Common Module
+Contains shared utilities, decorators, guards, filters, and services used across modules.
 
 ## Resources
 
-Check out a few resources that may come in handy when working with NestJS:
+- [NestJS Documentation](https://docs.nestjs.com)
+- [NestJS Official Course](https://courses.nestjs.com)
+- [TypeORM Documentation](https://typeorm.io)
+- [AWS SDK Documentation](https://docs.aws.amazon.com/sdk-for-javascript)
+- [OpenAI API Documentation](https://platform.openai.com/docs/api-reference)
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Contributing
 
-## Support
+When contributing to this project:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. Follow the existing code style (enforced by ESLint)
+2. Write tests for new features
+3. Run `npm run format` and `npm run lint` before committing
+4. Create migrations for database schema changes using `npm run migration:generate`
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under UNLICENSED. All rights reserved.
+
+## Support
+
+For support and questions, please contact the development team.
+
+---
+
+**Built with ❤️ using NestJS**
