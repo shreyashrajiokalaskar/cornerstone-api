@@ -12,27 +12,27 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { CreateChatDto } from './dto/create-chat.dto';
 
 @Controller('chat')
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatService: ChatService) { }
 
   @Post('sessions')
   chat(
-    @Body('question') question: string,
-    @Body('workspaceId') workspaceId: string,
+    @Body() createChat: CreateChatDto,
     @CurrentUser() user: ICurrentUser,
     @Query('id') id?: string,
   ) {
     this.logger.log('Chat request received', {
-      question,
-      workspaceId,
+      question: createChat.question,
+      workspaceId: createChat.workspaceId,
       userId: user.id,
       chatId: id,
       id,
     });
-    return this.chatService.chat(question, workspaceId, user.id, id);
+    return this.chatService.chat(createChat.question, createChat.workspaceId, user.id, id);
   }
 
   @UseGuards(InternalGuard)

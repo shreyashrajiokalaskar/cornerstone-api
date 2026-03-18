@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
 import { WorkspaceEntity } from 'src/workspaces/entities/workspace.entity';
 import { DataSource, Repository } from 'typeorm';
 import {
@@ -18,7 +19,6 @@ import { UpdateChatDto } from './dto/update-chat.dto';
 import { ChatEntity } from './entities/chat.entity';
 import { MessageChunkEntity } from './entities/message-chunk.entity';
 import { MessageEntity } from './entities/message.entity';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatService {
@@ -34,7 +34,7 @@ export class ChatService {
     private datasource: DataSource,
     private sqsService: SqsService,
     private userService: UsersService,
-  ) {}
+  ) { }
 
   async createChat(workspaceId: string, userId: string): Promise<ChatEntity> {
     this.logger.log(workspaceId);
@@ -111,7 +111,7 @@ export class ChatService {
       });
     });
 
-    return { chat, messages: finalMessages, email };
+    return { chat, messages: finalMessages };
   }
 
   findOne(id: number) {
