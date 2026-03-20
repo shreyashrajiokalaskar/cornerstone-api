@@ -27,7 +27,7 @@ export class AuthService {
     private googleService: GoogleAuthService,
     private redisService: RedisService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   async loginUser(loginDto: LoginDto) {
     const user = await this.userService.findByMail(loginDto.email, true);
@@ -113,21 +113,19 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     this.logger.verbose(
-      'Extracted access token from Request as ',
-      refreshToken,
+      `Extracted access token from Request as ${refreshToken}`,
     );
     const user: { id: string; email: string } | null =
       await this.redisService.get(`refresh:${refreshToken}`);
-    this.logger.verbose('Fetched user details from Redis ->', user);
+    this.logger.verbose('Fetched user details from Redis', user);
     if (!user) {
       throw new UnauthorizedException();
     }
-    this.logger.verbose('Fetched user details from Redis ->', user);
     await this.redisService.del(`refresh:${refreshToken}`);
     const newRefreshToken = generateRefreshToken();
     const payload = { id: user.id as string, email: user.email };
 
-    await this.redisService.set(`refresh:${refreshToken}`, payload, 2592000);
+    await this.redisService.set(`refresh:${newRefreshToken}`, payload, 2592000);
     return {
       token: await this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_SECRET'),

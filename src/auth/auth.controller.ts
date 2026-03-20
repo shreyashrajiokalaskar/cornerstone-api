@@ -52,10 +52,9 @@ export class AuthController {
   @Post('refresh')
   async refreshToken(@Body('refreshToken') refreshToken: string) {
     this.logger.verbose(
-      'Calling refreshToken() from Auth Controller with value',
-      refreshToken,
+      `Calling refreshToken() from Auth Controller with value ${refreshToken}`,
     );
-    return this.authService.refreshToken(refreshToken);
+    return await this.authService.refreshToken(refreshToken);
   }
 
   // @Public()

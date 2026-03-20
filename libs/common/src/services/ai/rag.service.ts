@@ -3,6 +3,7 @@ import {
   estimateTokens,
   IAiConfig,
   ISimilarSearch,
+  retry,
   truncateContext,
 } from '@app/common';
 import { Injectable, Logger } from '@nestjs/common';
@@ -32,14 +33,16 @@ export class RagService {
     });
   }
 
-  async ask(
+  async *ask(
     workspaceId: string,
     question: string,
     history: MessageEntity[],
     aiConfig: IAiConfig,
   ) {
     try {
-      this.logger.log('Question received', { question, workspaceId });
+      this.logger.log(
+        `Question received ${question} for workspace ${workspaceId}`,
+      );
       const embeddedQuestion = await this.embeddingService.embedText(question);
       const similarChunks: ISimilarSearch[] =
         await this.vectorService.similaritySearch(
@@ -51,6 +54,21 @@ export class RagService {
       this.logger.debug('Found similar chunks', {
         count: similarChunks.length,
       });
+
+      yield {
+        type: 'sources',
+        data: similarChunks.map((c, i) => ({
+          index: i + 1,
+          documentId: c.document_id,
+          name: c.document_name,
+          content: c.content.slice(0, 200),
+        })),
+      };
+
+      yield {
+        type: 'chunks',
+        data: similarChunks,
+      };
 
       // const context = similarChunks.map((chunk) => chunk.content).join("\n\n");
       // const context = similarChunks
@@ -70,43 +88,57 @@ export class RagService {
         | ChatCompletionUserMessageParam[]
         | ChatCompletionAssistantMessageParam[]
         | ChatCompletionSystemMessageParam[] = [
-        {
-          role: 'system',
-          content: aiConfig.systemPrompt,
-        },
-        ...(history.map((m: MessageEntity) => ({
-          role: m.role,
-          content: m.content,
-        })) as any),
-        {
-          role: 'user',
-          content: `
+          {
+            role: 'system',
+            content: aiConfig.systemPrompt,
+          },
+          ...(history.map((m: MessageEntity) => ({
+            role: m.role,
+            content: m.content,
+          })) as any),
+          {
+            role: 'user',
+            content: `
                     Documents:
                     ${context}
 
                     Question:
                     ${question}
                     `,
-        },
-      ];
+          },
+        ];
       // 1 content is here (Source: leave-policy.pdf)
-      const conversation = await this.client.chat.completions.create({
-        model: 'gpt-4.1-mini',
-        messages,
-        temperature: aiConfig.temperature,
-      });
+      const conversationStream = await retry(() =>
+        this.client.chat.completions.create({
+          model: 'gpt-4.1-mini',
+          messages,
+          temperature: aiConfig.temperature,
+          stream: true,
+        }),
+      );
+
+      for await (const chunk of conversationStream) {
+        const content = chunk.choices?.[0]?.delta?.content;
+
+        if (content) {
+          yield {
+            type: 'token',
+            content,
+          };
+        }
+      }
 
       //   return conversation.choices[0].message.content;
-      return {
-        answer: conversation.choices[0].message.content as string,
-        chunks: similarChunks as ISimilarSearch[],
-        sources: similarChunks.map((c, i) => ({
-          index: i + 1,
-          documentId: c.document_id,
-          documentName: c.document_name,
-          preview: c.content.slice(0, 200),
-        })),
-      };
+      // return {
+      //   answer: conversation.choices[0].message.content as string,
+      //   chunks: similarChunks as ISimilarSearch[],
+      //   sources: similarChunks.map((c, i) => ({
+      //     index: i + 1,
+      //     documentId: c.document_id,
+      //     documentName: c.document_name,
+      //     preview: c.content.slice(0, 200),
+      //   })),
+      // };
     } catch (error) {
       this.logger.error('RagService.ask failed', error);
       throw error;

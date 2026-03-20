@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
+import type { Response } from 'express';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { WorkspaceEntity } from 'src/workspaces/entities/workspace.entity';
@@ -88,7 +89,6 @@ export class ChatService {
       .where('message.chatId = :chatId', { chatId })
       .orderBy('message.createdAt', 'ASC')
       .getMany();
-    this.logger.debug('records', records);
 
     const finalMessages: any[] = [];
     records.map((rec) => {
@@ -146,6 +146,7 @@ export class ChatService {
     workspaceId: string,
     userId: string,
     chatId?: string,
+    res?: Response,
   ) {
     if (!chatId) {
       const workspace = await this.datasource
@@ -180,6 +181,10 @@ export class ChatService {
     if (!chat) {
       throw new NotFoundException('No chats exists for this workspace!');
     }
+    res?.write(`data: ${JSON.stringify({
+      type: 'chat_meta',
+      chatId,
+    })}\n\n`);
 
     if (question.length > AI_LIMITS.MAX_MESSAGE_LENGTH) {
       throw new BadRequestException('Message too long');
@@ -217,30 +222,67 @@ export class ChatService {
         },
       });
 
-    const rag = await this.ragService.ask(workspaceId, question, history, {
-      systemPrompt: workspace?.systemPrompt as string,
-      temperature: workspace?.temperature as number,
-      topK: workspace?.topK as number,
-    });
+    const stream = this.ragService.ask(
+      workspaceId,
+      question,
+      history,
+      {
+        systemPrompt: workspace?.systemPrompt as string,
+        temperature: workspace?.temperature as number,
+        topK: workspace?.topK as number,
+      },
+    );
+
+    let fullResponse = '';
+    let sources: any = [];
+    let chunks: any = [];
+
+    try {
+      for await (const event of stream) {
+        if (event.type === 'token') {
+          fullResponse += event.content;
+        }
+
+        if (event.type === 'sources') {
+          sources = event.data;
+        }
+
+        if (event.type === 'chunks') {
+          chunks = event.data;
+        }
+
+        // 👇 send to frontend
+        res?.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    } catch (error) {
+      console.error('Streaming error:', error);
+
+      res?.write(
+        `data: ${JSON.stringify({
+          type: 'error',
+          message: 'Something went wrong while generating response',
+        })}\n\n`
+      );
+
+      res?.end();
+    }
 
     const assistant = this.messageRepo.create({
       chatId,
       role: CHAT_ROLES.assistant,
-      content: rag?.answer,
+      content: fullResponse,
     });
 
     await this.messageRepo.save(assistant);
-    const chunks = rag!.chunks.map((chunk) => ({
+    const chunksModified = chunks.map((chunk) => ({
       messageId: assistant.id,
       chunkId: chunk.id,
     }));
 
-    await this.messageChunk.save(chunks);
-    return {
-      answer: assistant.content,
-      sources: rag!.sources,
-      chat,
-    };
+    await this.messageChunk.save(chunksModified);
+    // ✅ end stream
+    res?.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    res?.end();
   }
 
   async exportChat(chatId: string, userId: string) {

@@ -47,3 +47,27 @@ export function truncateContext(
 
   return selected;
 }
+
+export async function retry<T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 500
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: any) {
+    if (retries <= 0) throw err;
+
+    const retryable =
+      err?.status === 429 ||
+      err?.status >= 500 ||
+      err?.code === 'ECONNRESET' ||
+      err?.code === 'ETIMEDOUT';
+
+    if (!retryable) throw err;
+
+    await new Promise(res => setTimeout(res, delay));
+
+    return retry(fn, retries - 1, delay * 2);
+  }
+}

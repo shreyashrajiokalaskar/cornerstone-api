@@ -9,20 +9,23 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 
 @Controller('chat')
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
   @Post('sessions')
   chat(
     @Body() createChat: CreateChatDto,
     @CurrentUser() user: ICurrentUser,
+    @Res() res: Response,
     @Query('id') id?: string,
   ) {
     this.logger.log('Chat request received', {
@@ -32,7 +35,18 @@ export class ChatController {
       chatId: id,
       id,
     });
-    return this.chatService.chat(createChat.question, createChat.workspaceId, user.id, id);
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    return this.chatService.chat(
+      createChat.question,
+      createChat.workspaceId,
+      user.id,
+      id,
+      res,
+    );
   }
 
   @UseGuards(InternalGuard)
