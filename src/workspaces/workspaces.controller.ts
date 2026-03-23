@@ -1,5 +1,6 @@
 import type { ICurrentUser } from '@app/common';
 import { CurrentUser } from '@app/common';
+import { AdminGuard } from '@app/common/guards/admin/admin.guard';
 import {
   Body,
   Controller,
@@ -9,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
@@ -18,9 +20,10 @@ import { WorkspacesService } from './workspaces.service';
 export class WorkspacesController {
   private readonly logger = new Logger(WorkspacesController.name);
 
-  constructor(private readonly workspacesService: WorkspacesService) {}
+  constructor(private readonly workspacesService: WorkspacesService) { }
 
   @Post()
+  @UseGuards(AdminGuard)
   create(
     @Body() createWorkspaceDto: CreateWorkspaceDto,
     @CurrentUser() user: ICurrentUser,
@@ -45,6 +48,7 @@ export class WorkspacesController {
   }
 
   @Patch(':id')
+  @UseGuards(AdminGuard)
   update(
     @Param('id') id: string,
     @Body() updateWorkspaceDto: UpdateWorkspaceDto,
@@ -57,6 +61,7 @@ export class WorkspacesController {
   }
 
   @Delete(':id')
+  @UseGuards(AdminGuard)
   remove(@Param('id') id: string, @CurrentUser() user: ICurrentUser) {
     this.logger.log('remove workspace called', { id, ownerId: user.id });
     return this.workspacesService.remove(id, user.id);

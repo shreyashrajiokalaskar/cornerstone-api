@@ -1,3 +1,5 @@
+import { ROLES } from "../enum/common.enum";
+
 export interface IGoogleAuthCredentials {
   web: {
     client_id: string;
@@ -15,6 +17,7 @@ export interface ICurrentUser {
   email: string;
   iat: number;
   exp: number;
+  role: ROLES
 }
 
 export interface IPresignedUrl {

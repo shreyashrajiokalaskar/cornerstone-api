@@ -12,6 +12,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
@@ -19,9 +20,10 @@ import { CreateChatDto } from './dto/create-chat.dto';
 @Controller('chat')
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatService: ChatService) { }
 
   @Post('sessions')
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   chat(
     @Body() createChat: CreateChatDto,
     @CurrentUser() user: ICurrentUser,

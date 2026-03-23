@@ -35,7 +35,7 @@ export class AuthService {
     if (!isPasswordCorrect) {
       throw new BadRequestException('Wrong Password!');
     }
-    const payload = { id: user.id, email: user.email };
+    const payload = { id: user.id, email: user.email, role: user.role, };
     const refreshToken = generateRefreshToken();
     await this.redisService.set(`refresh:${refreshToken}`, payload, 2592000);
     return {

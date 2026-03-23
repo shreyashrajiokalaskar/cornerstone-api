@@ -16,7 +16,7 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
   private logger = new Logger(AuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Public()
   @Post('login')
