@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { WorkspaceEntity } from './entities/workspace.entity';
+import { ROLES } from '@app/common';
 
 @Injectable()
 export class WorkspacesService {
@@ -29,12 +30,16 @@ export class WorkspacesService {
     await this.workspaceRepo.save(workspace);
   }
 
-  findAll() {
+  async findAll(role: ROLES) {
     const queryBuilder = this.workspaceRepo.createQueryBuilder('workspace');
-    queryBuilder
+    const query = queryBuilder;
+    if (role === ROLES.USER) {
+      query.where('workspace.active = :status', { status: true });
+    }
+    query
       .orderBy('workspace.active', 'DESC')
       .addOrderBy('workspace.updatedAt', 'DESC');
-    return queryBuilder.getMany();
+    return await query.getMany();
   }
 
   async findOne(id: string) {
@@ -81,6 +86,10 @@ export class WorkspacesService {
     if (!workspace) {
       this.logger.log('Workspace NOT FOUND!');
       throw new NotFoundException('Workspace not Found!');
+    }
+    if (!workspace.documents?.length && updateWorkspaceDto.active) {
+      this.logger.log('Workspace DOES NOT have documents!');
+      throw new ConflictException('Workspace DOES NOT have any documents!');
     }
     try {
       Object.assign(workspace, updateWorkspaceDto);

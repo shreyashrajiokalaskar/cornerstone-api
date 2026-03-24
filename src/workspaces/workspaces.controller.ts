@@ -1,4 +1,4 @@
-import type { ICurrentUser } from '@app/common';
+import type { ICurrentUser, ROLES } from '@app/common';
 import { CurrentUser } from '@app/common';
 import { AdminGuard } from '@app/common/guards/admin/admin.guard';
 import {
@@ -20,7 +20,7 @@ import { WorkspacesService } from './workspaces.service';
 export class WorkspacesController {
   private readonly logger = new Logger(WorkspacesController.name);
 
-  constructor(private readonly workspacesService: WorkspacesService) { }
+  constructor(private readonly workspacesService: WorkspacesService) {}
 
   @Post()
   @UseGuards(AdminGuard)
@@ -36,9 +36,9 @@ export class WorkspacesController {
   }
 
   @Get()
-  findAll() {
+  findAll(@CurrentUser() user: ICurrentUser) {
     this.logger.log('findAll workspaces called');
-    return this.workspacesService.findAll();
+    return this.workspacesService.findAll(user.role);
   }
 
   @Get(':id')
