@@ -95,7 +95,7 @@ export class DocumentsService {
   }
 
   async remove(id: string) {
-    this.dataSource.transaction(async (manager) => {
+    await this.dataSource.transaction(async (manager) => {
       const document = await manager.findOne(DocumentEntity, {
         where: { id },
       });
