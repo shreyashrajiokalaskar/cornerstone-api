@@ -10,6 +10,13 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'cornerstone_user',
   password: process.env.DB_PASSWORD || 'cornerstone_password',
   database: process.env.DB_NAME || 'cornerstone_db',
+  ssl: true, // Required for Neon
+  extra: {
+    ssl: {
+      rejectUnauthorized: false, // Ensures compatibility with serverless environments
+    },
+  },
+
   entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
   migrations: [join(__dirname, '..', 'migrations', '*.{ts,js}')],
   synchronize: false,
